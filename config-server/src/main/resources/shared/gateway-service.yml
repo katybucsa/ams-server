@@ -1,0 +1,41 @@
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 91000
+
+ribbon:
+  ReadTimeout: 30000
+  ConnectTimeout: 15000
+
+zuul:
+  sensitiveHeaders: Cookie,Set-Cookie
+  host:
+    connect-timeout-millis: 40000
+    socket-timeout-millis: 40000
+  routes:
+    auth-service:
+      path: /authentication/** #path that will be intercepted
+      serviceId: auth-service #which url the request will be mapped to
+      stripPrefix: false #if zuul should replace the "/authentication/" segment
+    profile-service:
+      path: /customers/**
+      serviceId: profile-service
+      stripPrefix: false
+    attendance-server:
+      path: /attendance/**
+      serviceId: attendance-server
+      stripPrefix: false
+    assignment-service:
+      path: /assignment/**
+      serviceId: assignment-service
+      stripPrefix: false
+    subject-service:
+      path: /subject/**
+      serviceId: subject-service
+      stripPrefix: false
+
+server:
+  port: 8080

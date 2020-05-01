@@ -1,0 +1,29 @@
+#This configuration file will hold common configs to be shared among all files
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  cloud:
+    sentinel:
+      eager: true
+      transport:
+        dashboard: localhost:8099
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/ #where our registry server is located
+
+security:
+  oauth2:
+    resource:
+      user-info-uri: http://localhost:8081/authentication/current
+      token-info-uri: http://localhost:8081/authentication/oauth/check_token
+    client:
+      client-id: mobile
+      client-secret: pecai98
+      accessTokenUri: http://localhost:8081/authentication/oauth/token
+      grant-type: password
+
+logging:
+  level:
+    org.springframework.security: DEBUG

@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    config:
+      uri: http://localhost:8888
+      fail-fast: true
+      username: user
+      password: amsConfigServerPassword
+  flyway:
+    enabled: false #disable flyway for gateway server
+  autoconfigure: #disable jpa repository for gateway server
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration, \
+      org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration, \
+      org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+
+eureka:
+  instance:
+    prefer-ip-address: true  #when the application registers with eureka, it uses its IP address rather than its hostname
+  client:
+    register-with-eureka: true #tells the built-in eureka client to not register itself with eureka, because we should act as a server
+    fetch-registry: true
+
+auth:
+  url:
+    login: /authentication/login

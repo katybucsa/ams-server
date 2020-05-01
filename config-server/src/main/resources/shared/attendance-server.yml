@@ -1,0 +1,4 @@
+server:
+  servlet:
+    context-path: /attendance
+  port: 8082

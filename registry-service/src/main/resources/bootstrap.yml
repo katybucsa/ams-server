@@ -1,0 +1,25 @@
+#This file is the entry point for spring to know where to look for the configuration file
+#and will hold some configuration needed for
+
+spring:
+  application:
+    name: registry-service #name of the application
+  cloud:
+    config:
+      uri: http://localhost:8888 #where the config service is running
+      fail-fast: true #the service will not run if it can't reach the config-service
+      username: user #username of the config-service
+      password: amsConfigServerPassword #password of the config-service
+  flyway:
+    enabled: false #disable flyway for registry server
+  autoconfigure: #disable jpa repository for registry server
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration, \
+      org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration, \
+      org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+
+eureka:
+  instance:
+    prefer-ip-address: true  #when the application registers with eureka, it uses its IP address rather than its hostname
+  client:
+    register-with-eureka: false #tells the built-in eureka client to not register itself with eureka, because we should act as a server
+    fetch-registry: false

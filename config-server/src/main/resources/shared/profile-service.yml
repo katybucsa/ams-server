@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/entities
+    username: ams
+    password: ams
+    driver-class-name: org.postgresql.Driver
+
+server:
+  servlet:
+    context-path: /customers
+  port: 8090

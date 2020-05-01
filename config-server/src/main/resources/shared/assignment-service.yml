@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ams-assignment
+    username: ams
+    password: ams
+    driver-class-name: org.postgresql.Driver
+
+server:
+  servlet:
+    context-path: /assignment
+  port: 8084
