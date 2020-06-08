@@ -17,25 +17,35 @@ zuul:
     socket-timeout-millis: 40000
   routes:
     auth-service:
-      path: /authentication/** #path that will be intercepted
-      serviceId: auth-service #which url the request will be mapped to
-      stripPrefix: false #if zuul should replace the "/authentication/" segment
-    profile-service:
-      path: /customers/**
-      serviceId: profile-service
+      path: /auth/**
+      serviceId: auth-service
       stripPrefix: false
-    attendance-server:
+    attendance-service:
       path: /attendance/**
-      serviceId: attendance-server
+      serviceId: attendance-service
       stripPrefix: false
     assignment-service:
       path: /assignment/**
       serviceId: assignment-service
       stripPrefix: false
-    subject-service:
-      path: /subject/**
-      serviceId: subject-service
+    course-service:
+      path: /course/**
+      serviceId: course-service
       stripPrefix: false
+    notification-service:
+      path: /notification/**
+      serviceId: notification-service
+      stripPrefix: false
+    student-service:
+      path: /student/**
+      serviceId: student-service
+      stripPrefix: false
+#    gateway-service:
+#      path: /gateway/**
+#      serviceId: gateway-service
+#      stripPrefix: false
 
 server:
+#  servlet:
+#    context-path: /gateway
   port: 8080

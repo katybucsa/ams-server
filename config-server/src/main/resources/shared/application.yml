@@ -1,12 +1,25 @@
 #This configuration file will hold common configs to be shared among all files
 spring:
+#  cloud:
+#    loadbalancer:
+#      ribbon:
+#        enabled: false
   main:
     allow-bean-definition-overriding: true
-  cloud:
-    sentinel:
-      eager: true
-      transport:
-        dashboard: localhost:8099
+#  cloud:
+#    sentinel:
+#      eager: true
+#      transport:
+#        dashboard: localhost:8099
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    shutdown:
+      enabled: true
 
 eureka:
   client:
@@ -16,13 +29,14 @@ eureka:
 security:
   oauth2:
     resource:
-      user-info-uri: http://localhost:8081/authentication/current
-      token-info-uri: http://localhost:8081/authentication/oauth/check_token
+      user-info-uri: http://localhost:8081/auth/current
+      token-info-uri: http://localhost:8081/auth/oauth/check_token
     client:
-      client-id: mobile
-      client-secret: pecai98
-      accessTokenUri: http://localhost:8081/authentication/oauth/token
+      clientId: mobile
+      clientSecret: pecai98
+      accessTokenUri: http://localhost:8081/auth/oauth/token
       grant-type: password
+#      scope: health_mod
 
 logging:
   level:

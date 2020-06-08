@@ -3,9 +3,11 @@ package ro.ubbcluj.cs.ams.assignment.service.impl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import ro.ubbcluj.cs.ams.assignment.dto.GradeDto;
 import ro.ubbcluj.cs.ams.assignment.dto.GradeMapper;
 import ro.ubbcluj.cs.ams.assignment.dto.GradeResponseDto;
+import ro.ubbcluj.cs.ams.assignment.dto.GradesResponseDto;
 import ro.ubbcluj.cs.ams.assignment.model.tables.pojos.Grade;
 import ro.ubbcluj.cs.ams.assignment.model.tables.records.GradeRecord;
 import ro.ubbcluj.cs.ams.assignment.repository.AssignmentRepo;
@@ -15,6 +17,7 @@ import javax.inject.Provider;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 
 @org.springframework.stereotype.Service
 public class ServiceImpl implements Service {
@@ -42,5 +45,19 @@ public class ServiceImpl implements Service {
 
         logger.info("========== SUCCESSFUL LOGGING addGrade ==========");
         return gradeMapper.gradeRecordToGradeResponseDto(gradeRecord);
+    }
+
+    @Override
+    @Cacheable(value = "studentGrades", key = "{#student, #subjectId}")
+    public GradesResponseDto findAllGradesByStudentAndSubjectId(String student, String subjectId) {
+
+        logger.info("========== LOGGING findAllGradesByStudentAndSubjectId ==========");
+
+        List<GradeRecord> gradeRecordList = assignmentRepo.getAllGradesByStudentAndSubjectId(student, subjectId);
+
+        logger.info("========== SUCCESSFUL LOGGING findAllGradesByStudentAndSubjectId ==========");
+        return GradesResponseDto.builder()
+                .data(gradeMapper.gradeRecordsToGradeResponseDtos(gradeRecordList))
+                .build();
     }
 }

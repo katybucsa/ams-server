@@ -1,14 +1,12 @@
 package ro.ubbcluj.cs.ams.assignment.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NonNull;
+import lombok.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @AllArgsConstructor
-@NonNull
+@NoArgsConstructor
 @Data
 @Builder
 public class GradeResponseDto {

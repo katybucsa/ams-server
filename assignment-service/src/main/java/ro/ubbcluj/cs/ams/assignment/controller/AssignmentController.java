@@ -10,12 +10,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ro.ubbcluj.cs.ams.assignment.dto.GradeDto;
 import ro.ubbcluj.cs.ams.assignment.dto.GradeResponseDto;
+import ro.ubbcluj.cs.ams.assignment.dto.GradesResponseDto;
+import ro.ubbcluj.cs.ams.assignment.health.HandleServicesHealthRequests;
+import ro.ubbcluj.cs.ams.assignment.health.ServicesHealthChecker;
 import ro.ubbcluj.cs.ams.assignment.service.Service;
 import ro.ubbcluj.cs.ams.assignment.service.exception.AssignmentServiceException;
 import ro.ubbcluj.cs.ams.assignment.service.exception.AssignmentServiceExceptionType;
@@ -32,7 +32,28 @@ public class AssignmentController {
     @Autowired
     private MicroserviceCall microserviceCall;
 
-    private final Logger logger = LogManager.getLogger(AssignmentController.class);
+    @Autowired
+    private ServicesHealthChecker servicesHealthChecker;
+
+    @Autowired
+    private HandleServicesHealthRequests handleServicesHealthRequests;
+
+    private static final Logger LOGGER = LogManager.getLogger(AssignmentController.class);
+
+    @RequestMapping(value = "/health", method = RequestMethod.POST, params = {"service-name"})
+    public void health(@RequestParam(name = "service-name") String serviceName) {
+
+        LOGGER.info("========== Health check from service: {} ", serviceName);
+
+        handleServicesHealthRequests.sendResponseToService(serviceName);
+    }
+
+    @RequestMapping(value = "/present", method = RequestMethod.POST, params = {"service-name"})
+    public void present(@RequestParam(name = "service-name") String serviceName) {
+
+        LOGGER.info("========== Service {} is alive", serviceName);
+        servicesHealthChecker.addService(serviceName);
+    }
 
     @ApiOperation(value = "Assign given grade to the specified student")
     @ApiResponses(value = {
@@ -40,21 +61,39 @@ public class AssignmentController {
             @ApiResponse(code = 400, message = "INVALID_GRADE", response = AssignmentServiceExceptionType.class),
     })
     @RequestMapping(value = "/grades", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<GradeResponseDto> assignGrade(@RequestBody @Valid GradeDto gradeDto, BindingResult result, Principal principal) {
+    public ResponseEntity<?> assignGrade(@RequestBody @Valid GradeDto gradeDto, BindingResult result, Principal principal) {
 
-        logger.info("========== LOGGING assignGrade ==========");
-        logger.info("GradeDto {}", gradeDto);
+        LOGGER.info("========== LOGGING assignGrade ==========");
+        LOGGER.info("GradeDto {}", gradeDto);
         if (result.hasErrors()) {
-            logger.error("Invalid json object!");
+            LOGGER.error("Invalid json object!");
             throw new AssignmentServiceException("Invalid grade" + gradeDto, AssignmentServiceExceptionType.INVALID_GRADE, HttpStatus.BAD_REQUEST);
         }
 
         String teacherUsername = principal.getName();
-        microserviceCall.checkIfProfessorTeachesSpecificActivityTypeForASubject(gradeDto.getSubjectId(), gradeDto.getTypeId(), teacherUsername);
+        if (null == microserviceCall.checkIfProfessorTeachesSpecificActivityTypeForASubject(gradeDto.getSubjectId(), gradeDto.getTypeId(), teacherUsername)) {
+            LOGGER.error("========== subject microservice not responding ==========");
+            return new ResponseEntity<>("This service is not currently available", HttpStatus.SERVICE_UNAVAILABLE);
+        }
 //        microserviceCall.checkIfStudentExistsAndIsEnrolledIntoSubject(gradeDto.getStudent(), gradeDto.getSubjectId(), "assignGrade");
         GradeResponseDto gradeResponseDto = service.addGrade(gradeDto, teacherUsername);
 
-        logger.info("========== SUCCESSFUL LOGGING assignGrade ==========");
+        LOGGER.info("========== SUCCESSFUL LOGGING assignGrade ==========");
         return new ResponseEntity<>(gradeResponseDto, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Find all grades for a student to a specified subject")
+    @ApiResponses(value = {
+    })
+    @RequestMapping(value = "/grades", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> findAllGradesByStudentAndSubjectId(@RequestParam(name = "subjectId") String subjectId, Principal principal) {
+
+        LOGGER.info("========== LOGGING findAllGradesByStudentAndSubjectId ==========");
+
+        String studentUsername = principal.getName();
+        GradesResponseDto gradesResponseDto = service.findAllGradesByStudentAndSubjectId(studentUsername, subjectId);
+
+        LOGGER.info("========== SUCCESSFUL LOGGING findAllGradesByStudentAndSubjectId ==========");
+        return new ResponseEntity<>(gradesResponseDto, HttpStatus.OK);
     }
 }

@@ -4,8 +4,12 @@ spring:
       server:
         native:
           search-locations: classpath:/shared #tells spring where to locate the config files
+#        git:
+#          uri: https://github.com/katybucsa/config-server-files
+#          username: katybucsa
+#          password:
   profiles:
-    active: native #???
+    active: native
   security:
     user:
       password: amsConfigServerPassword #the password which apps will use to access its configurations
@@ -19,8 +23,8 @@ spring:
 
 eureka: #not register with eureka
   client:
-    register-with-eureka: false #tells the built-in eureka client to not register itself with eureka, because we should act as a server
+    register-with-eureka: false
     fetch-registry: false
 
 server:
-  port: 8888 #the port where the config-server will be accessible
+  port: 8888

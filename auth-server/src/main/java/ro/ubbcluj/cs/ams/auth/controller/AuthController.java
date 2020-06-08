@@ -4,10 +4,12 @@ import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -16,25 +18,52 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import ro.ubbcluj.cs.ams.auth.config.AuthConfiguration;
+import ro.ubbcluj.cs.ams.auth.dto.AuthResponse;
 import ro.ubbcluj.cs.ams.auth.dto.UserDto;
+import ro.ubbcluj.cs.ams.auth.health.HandleServicesHealthRequests;
+import ro.ubbcluj.cs.ams.auth.health.ServicesHealthChecker;
+import ro.ubbcluj.cs.ams.auth.service.UserDetailsServiceImpl;
 import ro.ubbcluj.cs.ams.auth.service.exception.AuthExceptionType;
 import ro.ubbcluj.cs.ams.auth.service.exception.AuthServiceException;
 
 import javax.validation.Valid;
 import java.security.Principal;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 public class AuthController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthConfiguration authProps;
 
     @Autowired
+    @Qualifier("WebClientBuilderBean")
     private WebClient.Builder webClientBuilder;
 
-    private Logger logger = LoggerFactory.getLogger(AuthController.class);
+    @Autowired
+    private UserDetailsServiceImpl userDetailsService;
+
+    @Autowired
+    private ServicesHealthChecker servicesHealthChecker;
+
+    @Autowired
+    private HandleServicesHealthRequests handleServicesHealthRequests;
+
+    @RequestMapping(value = "/health", method = RequestMethod.POST, params = {"service-name"})
+    public void health(@RequestParam(name = "service-name") String serviceName) {
+
+        LOGGER.info("========== Health check from service: {} ", serviceName);
+
+        handleServicesHealthRequests.sendResponseToService(serviceName);
+    }
+
+    @RequestMapping(value = "/present", method = RequestMethod.POST, params = {"service-name"})
+    public void present(@RequestParam(name = "service-name") String serviceName) {
+
+        LOGGER.info("========== Service {} is alive", serviceName);
+        servicesHealthChecker.addService(serviceName);
+    }
 
     @GetMapping("/current")
     public Principal getUser(Principal principal) {
@@ -47,15 +76,15 @@ public class AuthController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             params = {"username", "password"}
     )
-    public ResponseEntity<OAuth2AccessToken> login(@Valid UserDto userDto, BindingResult result) {
+    public ResponseEntity<AuthResponse> login(@Valid UserDto userDto, BindingResult result) {
 
-        logger.info("==========login==========");
-        logger.info("===========username: {}==========", userDto.getUsername());
-        logger.info("===========password: {}==========", userDto.getPassword());
+        LOGGER.info("==========login==========");
+        LOGGER.info("===========username: {}==========", userDto.getUsername());
+        LOGGER.info("===========password: {}==========", userDto.getPassword());
 
         if (result.hasErrors()) {
-            logger.error("==========login failed==========");
-            logger.error("Unexpected data!");
+            LOGGER.error("==========login failed==========");
+            LOGGER.error("Unexpected data!");
             throw new AuthServiceException("Invalid credentials!", AuthExceptionType.INVALID_CREDENTIALS, HttpStatus.BAD_REQUEST);
         }
 
@@ -72,7 +101,7 @@ public class AuthController {
         OAuth2AccessToken accessToken = webClientBuilder
                 .build()
                 .post()
-                .uri("http://auth-service/authentication/oauth/token")
+                .uri("http://auth-service/auth/oauth/token")
                 .header("Authorization", authHeader)
                 .body(BodyInserters.fromValue(bodyParams))
                 .accept(MediaType.APPLICATION_JSON)
@@ -80,8 +109,21 @@ public class AuthController {
                 .bodyToMono(OAuth2AccessToken.class)
                 .block();
 
-        logger.info("==========login successful==========");
-        return new ResponseEntity<>(accessToken, HttpStatus.OK);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(userDto.getUsername());
+        System.out.println(userDetails.getAuthorities());
+
+        AuthResponse authResponse = buildAuthResponse(userDetails, accessToken);
+        LOGGER.info("==========login successful==========");
+        return new ResponseEntity<>(authResponse, HttpStatus.OK);
+    }
+
+    private AuthResponse buildAuthResponse(UserDetails userDetails, OAuth2AccessToken accessToken) {
+
+        return AuthResponse.builder()
+                .access_token(accessToken.getValue())
+                .refresh_token(accessToken.getRefreshToken().getValue())
+                .role(userDetails.getAuthorities().iterator().next().getAuthority())
+                .build();
     }
 
     @ExceptionHandler({AuthServiceException.class})

@@ -9,10 +9,14 @@ spring:
       password: amsConfigServerPassword #password of the config-service
 eureka:
   instance:
-    prefer-ip-address: true  #when the application registers with eureka, it uses its IP address rather than its hostname
+    prefer-ip-address: true
+#    lease-expiration-duration-in-seconds: 10
+#    lease-renewal-interval-in-seconds: 10
   client:
-    register-with-eureka: true #tells the built-in eureka client to not register itself with eureka, because we should act as a server
+    register-with-eureka: true
     fetch-registry: true
+#    registry-fetch-interval-seconds: 7
+#    instance-info-replication-interval-seconds: 10
 
 grant-type: #password grant-type secret
   password:

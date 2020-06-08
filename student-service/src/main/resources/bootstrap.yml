@@ -1,0 +1,29 @@
+spring:
+#  redis:
+#    port: 6379
+#    host: localhost
+  #    password: redisPass
+  application:
+    name: student-service
+  cloud:
+    config:
+      uri: http://localhost:8888
+      fail-fast: true
+      username: user
+      password: amsConfigServerPassword
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    lease-expiration-duration-in-seconds: 10
+    lease-renewal-interval-in-seconds: 10
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    registry-fetch-interval-seconds: 7
+    instance-info-replication-interval-seconds: 10
+#graphql:
+#  servlet:
+#    mapping: /graphql
+#    enabled: true
+#    corsEnabled: true

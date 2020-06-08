@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: course-service
+  cloud:
+    config:
+      uri: http://localhost:8888 # where the config-server is running
+      fail-fast: true #the service will not run if it can't reach the config-service
+      username: user #username of the config-service
+      password: amsConfigServerPassword #password of the config-service
+  activemq:
+    broker-url: tcp://localhost:61616
+    user: admin
+    password: admin
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    lease-expiration-duration-in-seconds: 10
+    lease-renewal-interval-in-seconds: 10
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    registry-fetch-interval-seconds: 7
+    instance-info-replication-interval-seconds: 10
+
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: '*'
+#  endpoint:
+#    shutdown:
+#      enabled: true
+
+## graphql
+#graphql:
+#  servlet:
+#    mapping: /graphql
+#    enabled: true
+#    corsEnabled: true

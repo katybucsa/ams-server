@@ -1,0 +1,17 @@
+type Course {
+
+    id: ID!,
+    name:String!,
+    credits:Int,
+    specId:Int,
+    year:Int
+}
+
+type CourseQueries{
+
+    courses(coursesIds:[String]!): [Course]
+}
+
+schema {
+    query: CourseQueries
+}

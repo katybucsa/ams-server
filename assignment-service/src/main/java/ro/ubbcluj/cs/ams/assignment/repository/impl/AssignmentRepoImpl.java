@@ -10,6 +10,8 @@ import ro.ubbcluj.cs.ams.assignment.model.tables.pojos.Grade;
 import ro.ubbcluj.cs.ams.assignment.model.tables.records.GradeRecord;
 import ro.ubbcluj.cs.ams.assignment.repository.AssignmentRepo;
 
+import java.util.List;
+
 @Repository
 public class AssignmentRepoImpl implements AssignmentRepo {
 
@@ -30,5 +32,20 @@ public class AssignmentRepoImpl implements AssignmentRepo {
                 .fetchOne();
         logger.info("========== addGrade successful ==========");
         return gradeRecord;
+    }
+
+    @Override
+    public List<GradeRecord> getAllGradesByStudentAndSubjectId(String studentUsername, String subjectId) {
+
+        logger.info("========== LOGGING getAllGradesByStudentAndSubjectId ==========");
+        logger.info("Student username: {}, subject id: {}", studentUsername, subjectId);
+
+        List<GradeRecord> gradeRecordList = dsl.selectFrom(Tables.GRADE)
+                .where(Tables.GRADE.STUDENT.eq(studentUsername))
+                .and(Tables.GRADE.SUBJECT_ID.eq(subjectId))
+                .fetch();
+
+        logger.info("========== SUCCESSFUL LOGGING getAllGradesByStudentAndSubjectId ==========");
+        return gradeRecordList;
     }
 }

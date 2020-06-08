@@ -2,7 +2,6 @@ package ro.ubbcluj.cs.ams.auth.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,6 +33,9 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     @Autowired
     private UserDetailsService userDetailsService;
 
+//    @Autowired
+//    private ClientDetailsService clientDetailsService;
+
     //defines the security constraints on the token endpoint
     @Override
     public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
@@ -48,6 +50,7 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
 
+//        clients.withClientDetails(clientDetailsService);
         clients.jdbc(dataSource)
                 .passwordEncoder(passwordEncoder);
     }

@@ -1,4 +1,0 @@
-server:
-  servlet:
-    context-path: /subject
-  port: 8083

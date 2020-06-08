@@ -6,20 +6,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AccountStatusUserDetailsChecker;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import ro.ubbcluj.cs.ams.auth.config.AuthConfiguration;
-import ro.ubbcluj.cs.ams.auth.dto.UserDto;
 import ro.ubbcluj.cs.ams.auth.model.AuthUserDetail;
 import ro.ubbcluj.cs.ams.auth.model.User;
 import ro.ubbcluj.cs.ams.auth.repository.UserDetailsRepository;
 
-import java.security.Principal;
 import java.util.Optional;
 
 @Service("userDetailsService")

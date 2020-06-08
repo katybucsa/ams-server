@@ -1,0 +1,22 @@
+scalar _FieldSet
+directive @key(fields: _FieldSet!) on OBJECT | INTERFACE
+type Enrollment @key(fields:"studentId courseId"){
+
+    studentId: String!,
+    courseId:String!
+}
+
+type CoursesIds{
+
+    data:[String]
+}
+
+type EnrollmentQueries{
+
+    #    findAllStudentEnrollments(studentId:String!): [Enrollment],
+    enrollments: CoursesIds
+}
+
+schema {
+    query: EnrollmentQueries
+}
