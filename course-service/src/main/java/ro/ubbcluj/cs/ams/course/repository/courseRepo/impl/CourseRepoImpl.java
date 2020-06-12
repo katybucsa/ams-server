@@ -12,6 +12,8 @@ import ro.ubbcluj.cs.ams.course.repository.courseRepo.CourseRepo;
 
 import java.util.List;
 
+import static ro.ubbcluj.cs.ams.course.model.tables.Course.COURSE;
+
 @Component
 public class CourseRepoImpl implements CourseRepo {
 
@@ -44,5 +46,19 @@ public class CourseRepoImpl implements CourseRepo {
 
         LOGGER.info("========== SUCCESSFUL LOGGING findAllCoursesByIds ==========");
         return coursesList;
+    }
+
+    @Override
+    public CourseRecord findById(String id) {
+
+        LOGGER.info("========== LOGGING findById ==========");
+
+        CourseRecord courseRecord = dsl.selectFrom(COURSE)
+                .where(COURSE.ID.eq(id))
+                .fetchAny();
+
+        LOGGER.info("========== SUCCESSFUL LOGGING findById ==========");
+        return courseRecord;
+
     }
 }

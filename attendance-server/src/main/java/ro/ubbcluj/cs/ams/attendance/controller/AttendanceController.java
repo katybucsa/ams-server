@@ -56,6 +56,13 @@ public class AttendanceController {
         servicesHealthChecker.addService(serviceName);
     }
 
+    @RequestMapping(value = "/running", method = RequestMethod.GET)
+    public ResponseEntity running() {
+
+        LOGGER.info("========== Service running ==========");
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
     @ApiOperation(value = "Add attendance info")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "SUCCESS", response = AttendanceExceptionType.class),

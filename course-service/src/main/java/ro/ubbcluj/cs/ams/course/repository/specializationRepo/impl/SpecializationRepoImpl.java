@@ -16,12 +16,12 @@ public class SpecializationRepoImpl implements SpecializationRepo {
     @Autowired
     private DSLContext dsl;
 
-    private final Logger logger = LogManager.getLogger(SpecializationRepoImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(SpecializationRepoImpl.class);
 
     @Override
     public SpecializationRecord findById(Integer id) {
 
-        logger.info("++++++++++ Before find Specialization by id :" + id + " +++++++++++++");
+        LOGGER.info("++++++++++ Before find Specialization by id :" + id + " +++++++++++++");
 
         return dsl.selectFrom(Tables.SPECIALIZATION)
                 .fetchOne();

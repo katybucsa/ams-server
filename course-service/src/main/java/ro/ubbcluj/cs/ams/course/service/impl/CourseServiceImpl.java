@@ -9,28 +9,37 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jms.core.JmsTemplate;
 import ro.ubbcluj.cs.ams.course.controller.CourseController;
 import ro.ubbcluj.cs.ams.course.dto.Mappers;
+import ro.ubbcluj.cs.ams.course.dto.participation.ParticipationDetalis;
 import ro.ubbcluj.cs.ams.course.dto.course.CourseDtoRequest;
 import ro.ubbcluj.cs.ams.course.dto.course.CourseDtoResponse;
 import ro.ubbcluj.cs.ams.course.dto.course.CoursesDto;
 import ro.ubbcluj.cs.ams.course.dto.cplink.CpLinkResponseDto;
+import ro.ubbcluj.cs.ams.course.dto.participation.ParticipationsResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostRequestDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostsResponseDto;
-import ro.ubbcluj.cs.ams.course.model.tables.pojos.Course;
-import ro.ubbcluj.cs.ams.course.model.tables.pojos.CourseCode;
+import ro.ubbcluj.cs.ams.course.model.tables.pojos.*;
 import ro.ubbcluj.cs.ams.course.model.tables.records.*;
 import ro.ubbcluj.cs.ams.course.repository.courseCodeRepo.CourseCodeRepo;
 import ro.ubbcluj.cs.ams.course.repository.courseRepo.CourseRepo;
 import ro.ubbcluj.cs.ams.course.repository.cpLinkRepo.CpLinkRepo;
+import ro.ubbcluj.cs.ams.course.repository.event.EventRepo;
+import ro.ubbcluj.cs.ams.course.repository.participationRepo.ParticipationRepo;
 import ro.ubbcluj.cs.ams.course.repository.postRepo.PostRepo;
 import ro.ubbcluj.cs.ams.course.repository.specializationRepo.SpecializationRepo;
 import ro.ubbcluj.cs.ams.course.service.Service;
 import ro.ubbcluj.cs.ams.course.service.exception.CourseExceptionType;
 import ro.ubbcluj.cs.ams.course.service.exception.CourseServiceException;
 
+import javax.inject.Provider;
 import javax.jms.Queue;
 import javax.transaction.Transactional;
 import java.text.DecimalFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -53,7 +62,13 @@ public class CourseServiceImpl implements Service {
     private CpLinkRepo cpLinkRepo;
 
     @Autowired
+    private EventRepo eventRepo;
+
+    @Autowired
     private PostRepo postRepo;
+
+    @Autowired
+    private ParticipationRepo participRepo;
 
     @Autowired
     private Mappers mappers;
@@ -62,10 +77,16 @@ public class CourseServiceImpl implements Service {
     private Queue notificationQueue;
 
     @Autowired
+    private Queue participQueue;
+
+    @Autowired
     private JmsTemplate jmsTemplate;
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private Provider<Instant> instant;
 
     private String prefixCode = "ML";
 
@@ -85,7 +106,7 @@ public class CourseServiceImpl implements Service {
         CourseRecord savedCourse = courseRepo.addCourse(course);
 
         if (savedCourse == null)
-            throw new CourseServiceException("Course \"" + course.getName() + "\" already exists!!", CourseExceptionType.DUPLICATE_SUBJECT, HttpStatus.BAD_REQUEST);
+            throw new CourseServiceException("Course \"" + course.getName() + "\" already exists!!", CourseExceptionType.DUPLICATE_COURSE, HttpStatus.BAD_REQUEST);
 
         LOGGER.info("========== SUCCESSFUL LOGGING addCourse ==========");
         return CourseDtoResponse.builder()
@@ -127,12 +148,23 @@ public class CourseServiceImpl implements Service {
 
     @SneakyThrows
     @Override
-    public PostResponseDto addPost(PostRequestDto post) {
+    public PostResponseDto addPost(PostRequestDto postRequestDto, String professorUsername) {
 
         LOGGER.info("========== LOGGING addPost ==========");
 
-        PostRecord postRecord = postRepo.addPost(mappers.postRequestDtoToPost(post));
+        Post post = mappers.postRequestDtoToPost(postRequestDto);
+        post.setDate(LocalDateTime.ofInstant(instant.get(), ZoneId.systemDefault()));
+        post.setProfessorId(professorUsername);
+        PostRecord postRecord = postRepo.addPost(post);
         PostResponseDto postResponseDto = mappers.postRecordToPostResponseDto(postRecord);
+
+        if (post.getType().equals("event")) {
+            LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(
+                    postRequestDto.getEvent().getDate()), ZoneId.systemDefault());
+            Event event = new Event(postRecord.getId(), dateTime.toLocalDate(), dateTime.toLocalTime(), postRequestDto.getEvent().getPlace());
+            eventRepo.addEvent(event);
+            postResponseDto.setEvent(event);
+        }
         jmsTemplate.convertAndSend(notificationQueue, objectMapper.writeValueAsString(postResponseDto));
 
         LOGGER.info("========== SUCCESSFUL LOGGING addPost ==========");
@@ -145,10 +177,70 @@ public class CourseServiceImpl implements Service {
         LOGGER.info("========== LOGGING findPostsByCourseId ==========");
 
         List<PostRecord> postRecords = postRepo.findPostsByCourseId(courseId);
+        List<PostResponseDto> postResponseDtos = new ArrayList<>();
+        postRecords.forEach(postRecord -> {
+            PostResponseDto postResponseDto = mappers.postRecordToPostResponseDto(postRecord);
+            postResponseDto.setDate(postRecord.getDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")));
+            if (postRecord.getType().equals("event")) {
+                EventRecord eventRecord = eventRepo.findById(postRecord.getId());
+                postResponseDto.setEvent(mappers.eventRecordToEvent(eventRecord));
+            }
+            postResponseDtos.add(postResponseDto);
+        });
+        PostsResponseDto postsResponseDto = PostsResponseDto.builder()
+                .data(postResponseDtos)
+                .build();
 
         LOGGER.info("========== SUCCESSFUL LOGGING findPostsByCourseId ==========");
-        return PostsResponseDto.builder()
-                .data(mappers.postsRecordsToPostsResponseDto(postRecords))
+        return postsResponseDto;
+    }
+
+    @SneakyThrows
+    @Override
+    public Participation addOrDeleteParticipation(Participation participation) {
+
+        LOGGER.info("========== LOGGING addParticipation ==========");
+
+        int inserted = participRepo.addOrDeleteParticipation(participation);
+        if (inserted != 0) {
+            PostRecord postRecord = postRepo.findById(participation.getEventId());
+            CourseRecord courseRecord = courseRepo.findById(postRecord.getCourseId());
+            List<String> participants = participRepo
+                    .findAllByEventId(participation.getEventId())
+                    .stream()
+                    .map(ParticipationRecord::getUserId)
+                    .collect(Collectors.toList());
+//            title,courseId,professorId
+
+            ParticipationDetalis pDetails = ParticipationDetalis.builder()
+                    .courseId(postRecord.getCourseId())
+                    .courseName(courseRecord.getName())
+                    .postId(postRecord.getId())
+                    .postTitle(postRecord.getTitle())
+                    .professorId(postRecord.getProfessorId())
+                    .participants(participants)
+                    .build();
+
+            jmsTemplate.convertAndSend(participQueue, objectMapper.writeValueAsString(pDetails));
+        }
+
+        LOGGER.info("========== SUCCESSFUL LOGGING addParticipation ==========");
+        return participation;
+    }
+
+    @Override
+    public ParticipationsResponseDto findParticipationsByUserId(String userId) {
+
+        LOGGER.info("========== LOGGING findParticipationsByUserId ==========");
+
+        List<ParticipationRecord> participationRecords = participRepo.findAllByUserId(userId);
+
+        LOGGER.info("========== SUCCESSFUL LOGGING findParticipationsByUserId ==========");
+        return ParticipationsResponseDto.builder()
+                .data(participationRecords
+                        .stream()
+                        .map(ParticipationRecord::getEventId)
+                        .collect(Collectors.toList()))
                 .build();
     }
 

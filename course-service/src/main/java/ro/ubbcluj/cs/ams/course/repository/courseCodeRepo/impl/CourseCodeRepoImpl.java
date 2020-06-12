@@ -18,12 +18,12 @@ public class CourseCodeRepoImpl  implements CourseCodeRepo {
     @Autowired
     private DSLContext dsl;
 
-    private final Logger logger = LogManager.getLogger(CourseRepoImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(CourseCodeRepoImpl.class);
 
     @Override
     public CourseCodeRecord findByCourseName(String name) {
 
-        logger.info("++++++++ LOGGING findBySubjectName ++++++++");
+        LOGGER.info("++++++++ LOGGING findBySubjectName ++++++++");
 
         CourseCodeRecord subjectCodeRecord = dsl.selectFrom(Tables.COURSE_CODE)
                 .where(Tables.COURSE_CODE.COURSE_NAME.eq(name))
@@ -34,7 +34,7 @@ public class CourseCodeRepoImpl  implements CourseCodeRepo {
     @Override
     public Integer addCourseCode(CourseCode courseCode) {
 
-        logger.info("++++++++++ LOGGING addSubjectCode ++++++++++");
+        LOGGER.info("++++++++++ LOGGING addSubjectCode ++++++++++");
 
         Record1<Integer> code = dsl.insertInto(Tables.COURSE_CODE, Tables.COURSE_CODE.COURSE_NAME)
                 .values(courseCode.getCourseName())

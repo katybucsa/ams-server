@@ -43,7 +43,7 @@ public class AssignmentController {
     @RequestMapping(value = "/health", method = RequestMethod.POST, params = {"service-name"})
     public void health(@RequestParam(name = "service-name") String serviceName) {
 
-        LOGGER.info("========== Health check from service: {} ", serviceName);
+        LOGGER.info("========== Health check from service: {} ==========", serviceName);
 
         handleServicesHealthRequests.sendResponseToService(serviceName);
     }
@@ -51,9 +51,17 @@ public class AssignmentController {
     @RequestMapping(value = "/present", method = RequestMethod.POST, params = {"service-name"})
     public void present(@RequestParam(name = "service-name") String serviceName) {
 
-        LOGGER.info("========== Service {} is alive", serviceName);
+        LOGGER.info("========== Service {} is alive ==========", serviceName);
         servicesHealthChecker.addService(serviceName);
     }
+
+    @RequestMapping(value = "/running", method = RequestMethod.GET)
+    public ResponseEntity running() {
+
+        LOGGER.info("========== Service running ==========");
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
 
     @ApiOperation(value = "Assign given grade to the specified student")
     @ApiResponses(value = {

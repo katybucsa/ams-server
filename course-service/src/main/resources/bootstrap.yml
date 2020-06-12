@@ -7,10 +7,10 @@ spring:
       fail-fast: true #the service will not run if it can't reach the config-service
       username: user #username of the config-service
       password: amsConfigServerPassword #password of the config-service
-  activemq:
-    broker-url: tcp://localhost:61616
-    user: admin
-    password: admin
+#  activemq:
+#    broker-url: tcp://localhost:61616
+#    user: admin
+#    password: admin
 
 eureka:
   instance:

@@ -20,5 +20,10 @@ public class PostRequestDto {
     @NotNull
     private String text;
 
+    @NotNull
+    private String type;
+
     private String courseId;
+
+    private EventRequestDto event;
 }

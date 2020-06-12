@@ -16,6 +16,7 @@ public class ResourceConfig extends ResourceServerConfigurerAdapter {
         http.csrf().disable()
                 .authorizeRequests()
                 .regexMatchers(HttpMethod.POST, "/health\\?.*$", "/present\\?.*$").permitAll()//.access("#oauth2.hasScope('health_mod')")
+                .antMatchers(HttpMethod.GET, "/running").hasAuthority("ADMIN")
                 .anyRequest().authenticated();
     }
 

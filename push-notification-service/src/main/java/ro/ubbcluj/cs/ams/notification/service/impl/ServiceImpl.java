@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import ro.ubbcluj.cs.ams.notification.dto.*;
+import ro.ubbcluj.cs.ams.notification.model.tables.UserNotif;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Notification;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Subscription;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.SubscriptionKeys;
@@ -11,6 +12,7 @@ import ro.ubbcluj.cs.ams.notification.model.tables.records.NotificationRecord;
 import ro.ubbcluj.cs.ams.notification.model.tables.records.SubscriptionKeysRecord;
 import ro.ubbcluj.cs.ams.notification.model.tables.records.SubscriptionRecord;
 import ro.ubbcluj.cs.ams.notification.repository.notification.NotificationRepo;
+import ro.ubbcluj.cs.ams.notification.repository.notification.userNotif.UserNotifRepo;
 import ro.ubbcluj.cs.ams.notification.repository.subsKeys.SubscriptionKeysRepo;
 import ro.ubbcluj.cs.ams.notification.repository.subscription.SubscriptionRepo;
 import ro.ubbcluj.cs.ams.notification.service.Service;
@@ -31,6 +33,9 @@ public class ServiceImpl implements Service {
 
     @Autowired
     private NotificationRepo notificationRepo;
+
+    @Autowired
+    private UserNotifRepo userNotifRepo;
 
     @Autowired
     private Mappers mappers;
@@ -110,9 +115,25 @@ public class ServiceImpl implements Service {
 
         LOGGER.info("========== LOGGING findSubscriptionKeysById ==========");
 
-        SubscriptionKeysRecord subscriptionKeysRecord=subscriptionKeysRepo.findById(id);
+        SubscriptionKeysRecord subscriptionKeysRecord = subscriptionKeysRepo.findById(id);
 
         LOGGER.info("========== SUCCESSFULLY LOGGING findSubscriptionKeysById ==========");
         return mappers.subscriptionKeysRecordToSubscriptionKeys(subscriptionKeysRecord);
+    }
+
+    @Override
+    public List<Subscription> findSubscriptionsByUserId(String professorId) {
+
+        LOGGER.info("========== LOGGING findSubscriptionsByUserId ==========");
+
+        List<SubscriptionRecord> subscriptionRecords = subscriptionRepo.findSubscriptionsByUserId(professorId);
+
+        LOGGER.info("========== SUCCESSFULLY LOGGING findSubscriptionsByUserId ==========");
+        return mappers.subscriptionsRecordToSubscriptions(subscriptionRecords);
+    }
+
+    @Override
+    public List<UserNotif> findAllNotificationsForUser(String username) {
+        return null;
     }
 }

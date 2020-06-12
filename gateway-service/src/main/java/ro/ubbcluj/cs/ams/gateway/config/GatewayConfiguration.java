@@ -27,7 +27,8 @@ public class GatewayConfiguration extends ResourceServerConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers(props.getLogin(),"/auth/oauth/**").permitAll()
 //                .antMatchers(HttpMethod.POST,"/*/actuator/shutdown").hasAuthority("ADMIN")
-                .regexMatchers(HttpMethod.POST, "/health\\?.*$", "/present\\?.*$").permitAll()//.access("#oauth2.hasScope('health_mod')")
+                .regexMatchers(HttpMethod.POST, "gateway/health\\?.*$", "gateway/present\\?.*$").permitAll()//.access("#oauth2.hasScope('health_mod')")
+                .antMatchers(HttpMethod.GET, "gateway/running").hasAuthority("ADMIN")
                 .anyRequest().authenticated()
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);

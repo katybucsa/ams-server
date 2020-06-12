@@ -1,5 +1,6 @@
 package ro.ubbcluj.cs.ams.auth.health;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.discovery.EurekaClient;
 import com.netflix.discovery.shared.Applications;
 import lombok.SneakyThrows;
@@ -9,19 +10,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.reactive.function.client.WebClient;
+import ro.ubbcluj.cs.ams.utils.common.ServiceState;
 import ro.ubbcluj.cs.ams.utils.config.EurekaServicesProperties;
 import ro.ubbcluj.cs.ams.utils.config.TargetJarsProperties;
 import ro.ubbcluj.cs.ams.utils.health.MicroserviceDetails;
 
+import javax.jms.Queue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Configuration
-@EnableScheduling
+//@EnableScheduling
 public class ServicesHealthChecker {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServicesHealthChecker.class);
@@ -43,6 +47,15 @@ public class ServicesHealthChecker {
     @Value("${spring.application.name}")
     private String thisAppName;
 
+    @Autowired
+    private Queue adminQueue;
+
+    @Autowired
+    private JmsTemplate jmsTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
     public static final List<MicroserviceDetails> services = new ArrayList<>();
     private final List<String> aliveServices = new ArrayList<>();
     private List<MicroserviceDetails> detectedServices = new ArrayList<>();
@@ -51,12 +64,16 @@ public class ServicesHealthChecker {
     private static boolean allStarted = false;
 
     @SneakyThrows
-    @Scheduled(fixedDelay = SEND_INTERVAL)
+//    @Scheduled(fixedDelay = SEND_INTERVAL)
     private void sendHeartBeatRequestToAllServices() {
 
         while (true) {
             if (props.getNumber() == eurekaClient.getApplications().size() && !allStarted) {
 
+                jmsTemplate.convertAndSend(adminQueue, objectMapper.writeValueAsString(ServiceState.builder()
+                        .service(thisAppName.split("[-]")[0])
+                        .state("running")
+                        .build()));
                 allStarted = true;
                 addAllRegisteredServices();
                 Thread.sleep(15000);
@@ -109,6 +126,10 @@ public class ServicesHealthChecker {
                     detectedServices.add(service);
                     if (iAmTheLeader()) {
                         LOGGER.info("========== I am the leader - {}", thisAppName);
+                        jmsTemplate.convertAndSend(adminQueue, objectMapper.writeValueAsString(ServiceState.builder()
+                                .service(service.getName().split("[-]")[0])
+                                .state("error")
+                                .build()));
                         Runtime.getRuntime().exec("cmd /c start cmd.exe /K \"java -jar " + service.getJarPath() + "\"");
                     }
                 }

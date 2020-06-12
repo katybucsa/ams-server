@@ -10,4 +10,6 @@ public interface CourseRepo {
     CourseRecord addCourse(Course course);
 
     List<CourseRecord> findAllCoursesByIds(List<String> coursesIds);
+
+    CourseRecord findById(String id);
 }

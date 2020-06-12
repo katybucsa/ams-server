@@ -10,4 +10,6 @@ public interface PostRepo {
     PostRecord addPost(Post post);
 
     List<PostRecord> findPostsByCourseId(String courseId);
+
+    PostRecord findById(int id);
 }

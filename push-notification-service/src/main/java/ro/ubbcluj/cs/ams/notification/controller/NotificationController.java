@@ -4,6 +4,7 @@ import org.jooq.tools.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -12,6 +13,7 @@ import ro.ubbcluj.cs.ams.notification.dto.SubscriptionDto;
 import ro.ubbcluj.cs.ams.notification.dto.SubscriptionEndpoint;
 import ro.ubbcluj.cs.ams.notification.health.HandleServicesHealthRequests;
 import ro.ubbcluj.cs.ams.notification.health.ServicesHealthChecker;
+import ro.ubbcluj.cs.ams.notification.model.tables.UserNotif;
 import ro.ubbcluj.cs.ams.notification.notificator.SendNotificationHandler;
 import ro.ubbcluj.cs.ams.notification.service.ServerKeys;
 import ro.ubbcluj.cs.ams.notification.service.Service;
@@ -50,6 +52,12 @@ public class NotificationController {
         servicesHealthChecker.addService(serviceName);
     }
 
+    @RequestMapping(value = "/running", method = RequestMethod.GET)
+    public ResponseEntity running() {
+
+        LOGGER.info("========== Service running ==========");
+        return new ResponseEntity(HttpStatus.OK);
+    }
 
     @GetMapping(path = "/publicSigningKey", produces = "application/octet-stream")
     public byte[] publicSigningKey() {
@@ -60,7 +68,7 @@ public class NotificationController {
         return arr;
     }
 
-    @GetMapping(path = "/publicSigningKeyBase64")
+    @GetMapping(path = "/signing-key")
     public String publicSigningKeyBase64() {
 
         String str = this.serverKeys.getPublicKeyBase64();
@@ -69,7 +77,7 @@ public class NotificationController {
         return str;
     }
 
-    @PostMapping("/subscribe")
+    @PostMapping("/subscription")
     @ResponseStatus(HttpStatus.CREATED)
     public void subscribe(@RequestBody SubscriptionDto subscription, Principal principal) {
 
@@ -87,14 +95,7 @@ public class NotificationController {
         LOGGER.info("========== SUCCESSFULLY LOGGING subscribe for user {} ==========", principal.getName());
     }
 
-//    @PostMapping("/subscribeAngular")
-//    @ResponseStatus(HttpStatus.CREATED)
-//    public void subscribeAngular(@RequestBody Subscription subscription) {
-//        System.out.println("subscribe: " + subscription);
-//        this.subscriptionsAngular.put(subscription.getEndpoint(), subscription);
-//    }
-
-    @PostMapping("/unsubscribe")
+    @PostMapping("/unsubscription")
     public void unsubscribe(@RequestBody SubscriptionEndpoint subscription, Principal principal) {
 
         LOGGER.info("========== LOGGING unsubscribe for user {} ==========", principal.getName());
@@ -104,14 +105,7 @@ public class NotificationController {
         LOGGER.info("========== SUCCESSFULLY LOGGING unsubscribe for user {} ==========", principal.getName());
     }
 
-//    @PostMapping("/unsubscribeAngular")
-//    @ResponseStatus(HttpStatus.NO_CONTENT)
-//    public void unsubscribeAngular(@RequestBody SubscriptionEndpoint subscription) {
-//        System.out.println("unsubscribe: " + subscription);
-//        this.subscriptionsAngular.remove(subscription.getEndpoint());
-//    }
-
-    @PostMapping("/isSubscribed")
+    @PostMapping("/subscribed")
     public ResponseEntity<?> isSubscribed(@RequestBody SubscriptionEndpoint subscription, Principal principal) {
 
         LOGGER.info("========== LOGGING isSubscribed for user {} ==========", principal.getName());
@@ -121,6 +115,12 @@ public class NotificationController {
         LOGGER.info("========== User has subscription for provided endpoint {} ==========", existsSubsc);
         LOGGER.info("========== SUCCESSFULLY LOGGING isSubscribed for user {} ==========", principal.getName());
         return new ResponseEntity<>(new JSONObject().put("isSubscribed", existsSubsc), HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "" ,method = RequestMethod.GET)
+    public ResponseEntity<UserNotif> findNotificationsForUser(Principal principal){
+
+        return null;
     }
 
 //    @PostMapping("/isSubscribedAngular")

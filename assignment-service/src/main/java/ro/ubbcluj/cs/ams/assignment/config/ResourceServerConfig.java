@@ -20,6 +20,7 @@ public class ResourceServerConfig  extends ResourceServerConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/grades").hasAuthority("PROFESSOR")
                 .antMatchers(HttpMethod.GET, "/grades").hasAuthority("STUDENT")
                 .antMatchers(HttpMethod.POST,"/actuator/shutdown").hasAuthority("ADMIN")
+                .antMatchers(HttpMethod.GET, "/running").hasAuthority("ADMIN")
                 .anyRequest().authenticated();
     }
 }

@@ -12,12 +12,12 @@ import ro.ubbcluj.cs.ams.course.repository.cpLinkRepo.CpLinkRepo;
 import java.util.List;
 
 @Repository
-public class CpLinkDaoRepo implements CpLinkRepo {
+public class CpLinkRepoImpl implements CpLinkRepo {
 
     @Autowired
     private DSLContext dsl;
 
-    private static final Logger LOGGER = LogManager.getLogger(CpLinkDaoRepo.class);
+    private static final Logger LOGGER = LogManager.getLogger(CpLinkRepoImpl.class);
 
     @Override
     public CpLinkRecord findCpLink(String courseId, int typeId, String professor) {

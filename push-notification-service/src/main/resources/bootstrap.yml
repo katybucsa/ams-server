@@ -7,10 +7,10 @@ spring:
       fail-fast: true
       username: user
       password: amsConfigServerPassword
-  activemq:
-    broker-url: tcp://localhost:61616
-    user: admin
-    password: admin
+#  activemq:
+#    broker-url: tcp://localhost:61616
+#    user: admin
+#    password: admin
 
   #  flyway:
 #    enabled: false

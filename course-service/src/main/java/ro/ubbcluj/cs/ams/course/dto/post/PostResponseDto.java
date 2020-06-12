@@ -4,8 +4,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ro.ubbcluj.cs.ams.course.model.tables.pojos.Event;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,5 +21,11 @@ public class PostResponseDto implements Serializable {
 
     private String text;
 
-    private String courseid;
+    private String courseId;
+
+    private String date;
+
+    private String type;
+
+    private Event event;
 }

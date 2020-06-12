@@ -40,10 +40,10 @@ zuul:
       path: /student/**
       serviceId: student-service
       stripPrefix: false
-#    gateway-service:
-#      path: /gateway/**
-#      serviceId: gateway-service
-#      stripPrefix: false
+    gateway-service:
+      path: /gateway/**
+      serviceId: gateway-service
+      stripPrefix: false
 
 server:
 #  servlet:

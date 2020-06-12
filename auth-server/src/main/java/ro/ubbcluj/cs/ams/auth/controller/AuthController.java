@@ -65,6 +65,13 @@ public class AuthController {
         servicesHealthChecker.addService(serviceName);
     }
 
+    @RequestMapping(value = "/running", method = RequestMethod.GET)
+    public ResponseEntity running() {
+
+        LOGGER.info("========== Service running ==========");
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
     @GetMapping("/current")
     public Principal getUser(Principal principal) {
         return principal;

@@ -12,6 +12,8 @@ import ro.ubbcluj.cs.ams.course.repository.postRepo.PostRepo;
 
 import java.util.List;
 
+import static ro.ubbcluj.cs.ams.course.model.tables.Post.POST;
+
 @Repository
 public class PostRepoImpl implements PostRepo {
 
@@ -25,8 +27,8 @@ public class PostRepoImpl implements PostRepo {
 
         LOGGER.info("========== LOGGING addPost ==========");
 
-        PostRecord postRecord = dsl.insertInto(Tables.POST, Tables.POST.TITLE, Tables.POST.TEXT, Tables.POST.COURSE_ID)
-                .values(post.getTitle(), post.getText(), post.getCourseId())
+        PostRecord postRecord = dsl.insertInto(POST, POST.TITLE, POST.TEXT, POST.COURSE_ID, POST.PROFESSOR_ID, POST.TYPE, POST.DATE)
+                .values(post.getTitle(), post.getText(), post.getCourseId(), post.getProfessorId(), post.getType(), post.getDate())
                 .returning()
                 .fetchOne();
 
@@ -39,11 +41,25 @@ public class PostRepoImpl implements PostRepo {
 
         LOGGER.info("========== LOGGING findPostsByCourseId ==========");
 
-        List<PostRecord> postRecords = dsl.selectFrom(Tables.POST)
-                .where(Tables.POST.COURSE_ID.eq(courseId))
+        List<PostRecord> postRecords = dsl.selectFrom(POST)
+                .where(POST.COURSE_ID.eq(courseId))
+                .orderBy(POST.DATE.desc())
                 .fetch();
 
         LOGGER.info("========== SUCCESSFUL LOGGING findPostsByCourseId ==========");
         return postRecords;
+    }
+
+    @Override
+    public PostRecord findById(int id) {
+
+        LOGGER.info("========== LOGGING findById ==========");
+
+        PostRecord postRecord = dsl.selectFrom(POST)
+                .where(POST.ID.eq(id))
+                .fetchAny();
+
+        LOGGER.info("========== SUCCESSFUL LOGGING findById ==========");
+        return postRecord;
     }
 }

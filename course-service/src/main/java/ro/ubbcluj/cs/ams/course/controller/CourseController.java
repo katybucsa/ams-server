@@ -16,18 +16,21 @@ import ro.ubbcluj.cs.ams.course.dto.course.CourseDtoRequest;
 import ro.ubbcluj.cs.ams.course.dto.course.CourseDtoResponse;
 import ro.ubbcluj.cs.ams.course.dto.course.CoursesDto;
 import ro.ubbcluj.cs.ams.course.dto.cplink.CpLinkResponseDto;
+import ro.ubbcluj.cs.ams.course.dto.participation.ParticipationsResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostRequestDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostsResponseDto;
 import ro.ubbcluj.cs.ams.course.health.HandleServicesHealthRequests;
 import ro.ubbcluj.cs.ams.course.health.ServicesHealthChecker;
 import ro.ubbcluj.cs.ams.course.model.tables.Course;
+import ro.ubbcluj.cs.ams.course.model.tables.pojos.Participation;
 import ro.ubbcluj.cs.ams.course.service.Service;
 import ro.ubbcluj.cs.ams.course.service.exception.CourseExceptionType;
 import ro.ubbcluj.cs.ams.course.service.exception.CourseServiceException;
 
 import javax.validation.Valid;
 import java.security.Principal;
+import java.util.Objects;
 
 @RestController
 public class CourseController {
@@ -59,6 +62,13 @@ public class CourseController {
         servicesHealthChecker.addService(serviceName);
     }
 
+    @RequestMapping(value = "/running", method = RequestMethod.GET)
+    public ResponseEntity running() {
+
+        LOGGER.info("========== Service running ==========");
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
     /**
      * URL : http://localhost:8080/subject/
      *
@@ -75,10 +85,10 @@ public class CourseController {
     public ResponseEntity<CourseDtoResponse> addSubject(@RequestBody @Valid CourseDtoRequest subject, BindingResult result) {
 
         LOGGER.info("+++++++++LOGGING addSubject+++++++++");
-        loggingSubject(subject);
+        loggingCourse(subject);
 
         if (result.hasErrors())
-            throw new CourseServiceException("Invalid subject " + subject, CourseExceptionType.INVALID_SUBJECT, HttpStatus.BAD_REQUEST);
+            throw new CourseServiceException("Invalid subject " + subject, CourseExceptionType.INVALID_COURSE, HttpStatus.BAD_REQUEST);
 
         CourseDtoResponse subjectDtoResponse = service.addCourse(subject);
 
@@ -141,13 +151,11 @@ public class CourseController {
     }
 
 
-    @ApiOperation(value = "Add post")
+    @ApiOperation(value = "Add post to a course")
     @ApiResponses(value = {
-//            @ApiResponse(code = 200, message = "SUCCESS", response = SpLinkResponseDto.class),
-//            @ApiResponse(code = 404, message = "NOT FOUND", response = SubjectExceptionType.class)
     })
     @RequestMapping(value = "/{courseId}/posts", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<PostResponseDto> addPost(@RequestBody @Valid PostRequestDto postRequestDto, @PathVariable(name = "courseId") String courseId, BindingResult result) {
+    public ResponseEntity<PostResponseDto> addPost(@RequestBody @Valid PostRequestDto postRequestDto, @PathVariable(name = "courseId") String courseId, BindingResult result, Principal principal) {
 
         LOGGER.info("========== LOGGING addPost ==========");
         LOGGER.info("PostRequestDto {}", postRequestDto);
@@ -157,13 +165,47 @@ public class CourseController {
         }
 
         postRequestDto.setCourseId(courseId);
-        PostResponseDto postRecord = service.addPost(postRequestDto);
+        PostResponseDto postRecord = service.addPost(postRequestDto, principal.getName());
 
 
         LOGGER.info("========== SUCCESSFUL LOGGING addPost ==========");
         return new ResponseEntity<>(postRecord, HttpStatus.OK);
     }
 
+
+    @ApiOperation(value = "Add participation to an event")
+    @ApiResponses(value = {
+
+    })
+    @RequestMapping(value = "/{courseId}/events/participations", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Participation> addOrDeleteParticipation(@RequestBody Participation participation, Principal principal) {
+
+        LOGGER.info("========== LOGGING addOrDeleteParticipation ==========");
+
+        if (Objects.isNull(participation.getEventId())) {
+            throw new CourseServiceException("Event id must not be null", CourseExceptionType.BAD_DATA, HttpStatus.BAD_REQUEST);
+        }
+
+        participation.setUserId(principal.getName());
+        participation = service.addOrDeleteParticipation(participation);
+
+        LOGGER.info("========== SUCCESSFUL LOGGING addOrDeleteParticipation ==========");
+        return new ResponseEntity<>(participation, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Add participation to an event")
+    @ApiResponses(value = {
+    })
+    @RequestMapping(value = "/{courseId}/events/participations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ParticipationsResponseDto> findAllParticipationsByUserId(Principal principal) {
+
+        LOGGER.info("========== LOGGING findAllParticipationsByUserId ==========");
+
+        ParticipationsResponseDto participations = service.findParticipationsByUserId(principal.getName());
+
+        LOGGER.info("========== SUCCESSFUL LOGGING findAllParticipationsByUserId ==========");
+        return new ResponseEntity<>(participations, HttpStatus.OK);
+    }
 
 //    @ApiOperation(value = "Get full details about courses when given ids")
 //    @ApiResponses(value = {
@@ -182,7 +224,7 @@ public class CourseController {
 //        return new ResponseEntity<>(, HttpStatus.OK);
 //    }
 
-    private void loggingSubject(CourseDtoRequest subject) {
+    private void loggingCourse(CourseDtoRequest subject) {
 
         LOGGER.info("Subject name: {}", subject.getName());
         LOGGER.info("Subject credits: {}", subject.getCredits());

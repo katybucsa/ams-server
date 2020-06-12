@@ -16,12 +16,11 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
 
         http.csrf().disable()
                 .authorizeRequests()
-                .anyRequest().permitAll();
-//                .antMatchers("/login", "/oauth/**").permitAll()
-//                .antMatchers(HttpMethod.POST, "/actuator/shutdown").hasAuthority("ADMIN")
-//                .regexMatchers(HttpMethod.POST, "/health\\?.*$", "/present\\?.*$").permitAll()//.access("#oauth2.hasScope('health_mod')")
-//                .antMatchers("/current").authenticated()
-//                .antMatchers(HttpMethod.POST,"/*/actuator/shutdown").hasAuthority("ADMIN")
-//                .anyRequest().authenticated();
+                .antMatchers("/login", "/oauth/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/actuator/shutdown").hasAuthority("ADMIN")
+                .regexMatchers(HttpMethod.POST, "/health\\?.*$", "/present\\?.*$").permitAll()//.access("#oauth2.hasScope('health_mod')")
+                .antMatchers("/current").authenticated()
+                .antMatchers(HttpMethod.POST,"/*/actuator/shutdown").hasAuthority("ADMIN")
+                .anyRequest().authenticated();
     }
 }

@@ -23,8 +23,8 @@ public class NotificationRepoImpl implements NotificationRepo {
 
         LOGGER.info("========== LOGGING addNotification ==========");
 
-        NotificationRecord notificationRecord = dsl.insertInto(Tables.NOTIFICATION, Tables.NOTIFICATION.POST_ID, Tables.NOTIFICATION.TITLE, Tables.NOTIFICATION.BODY)
-                .values(notification.getPostId(), notification.getTitle(), notification.getBody())
+        NotificationRecord notificationRecord = dsl.insertInto(Tables.NOTIFICATION, Tables.NOTIFICATION.POST_ID,Tables.NOTIFICATION.COURSE_ID, Tables.NOTIFICATION.TITLE, Tables.NOTIFICATION.BODY)
+                .values(notification.getPostId(), notification.getCourseId(),notification.getTitle(), notification.getBody())
                 .returning()
                 .fetchOne();
 

@@ -9,15 +9,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ro.ubbcluj.cs.ams.notification.dto.PostResponseDto;
-import ro.ubbcluj.cs.ams.notification.dto.SubscriptionDto;
-import ro.ubbcluj.cs.ams.notification.dto.SubscriptionEndpoint;
+import ro.ubbcluj.cs.ams.notification.dto.*;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Notification;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Subscription;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.SubscriptionKeys;
+import ro.ubbcluj.cs.ams.notification.model.tables.records.SubscriptionRecord;
 import ro.ubbcluj.cs.ams.notification.service.CryptoService;
 import ro.ubbcluj.cs.ams.notification.service.ServerKeys;
 import ro.ubbcluj.cs.ams.notification.service.Service;
+import ro.ubbcluj.cs.ams.utils.common.ServiceState;
 import rx.subscriptions.Subscriptions;
 
 import javax.annotation.PostConstruct;
@@ -65,7 +65,7 @@ public class SendNotificationHandler {
 
         Notification notification = new Notification();
         notification.setPostId(postResponseDto.getId());
-        notification.setCourseId(postResponseDto.getCourseid());
+        notification.setCourseId(postResponseDto.getCourseId());
         notification.setTitle(postResponseDto.getTitle());
         notification.setBody(postResponseDto.getText());
         Notification savedNotification = service.addNotification(notification);
@@ -73,6 +73,55 @@ public class SendNotificationHandler {
         sendPushMessageToAllSubscribers(subscriptions, savedNotification);
     }
 
+    @SneakyThrows
+    public void sendParticipNotification(ParticipationDetalis participationDetalis) {
+
+        List<Subscription> subscriptions = service.findSubscriptionsByUserId(participationDetalis.getProfessorId());
+        String body = null;
+        if (participationDetalis.getParticipants().size() > 2) {
+            body = participationDetalis.getParticipants().get(0) +
+                    "," + participationDetalis.getParticipants().get(1) +
+                    "another " + (participationDetalis.getParticipants().size() - 2) + "participate to " +
+                    participationDetalis.getPostTitle();
+        } else {
+            if (participationDetalis.getParticipants().size() == 1) {
+                body = participationDetalis.getParticipants().get(0) +
+                        " participates to " +
+                        participationDetalis.getPostTitle();
+            } else {
+                body = participationDetalis.getParticipants().get(0) +
+                        "," + participationDetalis.getParticipants().get(1) +
+                        "participate to " +
+                        participationDetalis.getPostTitle();
+            }
+        }
+        Notification notification = new Notification();
+        notification.setPostId(participationDetalis.getPostId());
+        notification.setCourseId(participationDetalis.getCourseId());
+        notification.setTitle(participationDetalis.getCourseName());
+        notification.setBody(body);
+        sendPushMessageToAllSubscribers(subscriptions, notification);
+
+    }
+
+    @SneakyThrows
+    public void sendAdminNotification(ServiceState serviceState) {
+
+        List<Subscription> subscriptions = service.findSubscriptionsByUserRole("ADMIN");
+        AdminNotif notification = AdminNotif.builder()
+                .service(serviceState.getService())
+                .state(serviceState.getState())
+                .to("admin")
+                .build();
+        if (serviceState.getState().equals("running")) {
+            notification.setTitle("Service running again");
+            notification.setBody("Service " + serviceState.getService().split("[-]")[0].toUpperCase() + " is running");
+        }else{
+            notification.setTitle("Service stopped running");
+            notification.setBody("Service " + serviceState.getService().split("[-]")[0].toUpperCase() + " has stopped");
+        }
+        sendPushMessageToAllSubscribers(subscriptions, notification);
+    }
 
     @SneakyThrows
     private void sendPushMessageToAllSubscribers(List<Subscription> subs,
@@ -107,4 +156,6 @@ public class SendNotificationHandler {
             }
         }
     }
+
+
 }

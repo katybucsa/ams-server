@@ -12,6 +12,8 @@ import ro.ubbcluj.cs.ams.notification.repository.subscription.SubscriptionRepo;
 
 import java.util.List;
 
+import static ro.ubbcluj.cs.ams.notification.model.tables.Subscription.SUBSCRIPTION;
+
 @Repository
 public class SubscriptionRepoImpl implements SubscriptionRepo {
 
@@ -71,6 +73,19 @@ public class SubscriptionRepoImpl implements SubscriptionRepo {
                 .fetch();
 
         LOGGER.info("========== SUCCESSFULLY LOGGING findSubscription ==========");
+        return subscriptionRecords;
+    }
+
+    @Override
+    public List<SubscriptionRecord> findSubscriptionsByUserId(String professorId) {
+
+        LOGGER.info("========== LOGGING findSubscriptionsByUserId ==========");
+
+        List<SubscriptionRecord> subscriptionRecords = dsl.selectFrom(SUBSCRIPTION)
+                .where(SUBSCRIPTION.USERNAME.eq(professorId))
+                .fetch();
+
+        LOGGER.info("========== SUCCESSFULLY LOGGING findSubscriptionsByUserId ==========");
         return subscriptionRecords;
     }
 }

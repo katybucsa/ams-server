@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -19,5 +20,11 @@ public class PostResponseDto implements Serializable {
 
     private String text;
 
-    private String courseid;
+    private String courseId;
+
+    private LocalDateTime date;
+
+    private String type;
+
+    private Event event;
 }
