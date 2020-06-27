@@ -7,4 +7,6 @@ import java.util.List;
 public interface EnrollmentRepo {
 
     List<EnrollmentRecord> findAllStudentEnrollments(String studentId);
+
+    List<EnrollmentRecord> findAllEnrolledStudents(String courseId);
 }

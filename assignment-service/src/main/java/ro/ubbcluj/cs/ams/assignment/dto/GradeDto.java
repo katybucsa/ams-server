@@ -27,6 +27,6 @@ public class GradeDto {
     @DecimalMin(value = "0", message = "Grade cannot be smaller than 0!")
     private Double value;
 
-    @NotBlank(message = "Subject is null!")
-    private String subjectId;
+    @NotBlank(message = "Course is null!")
+    private String courseId;
 }

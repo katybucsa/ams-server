@@ -12,10 +12,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import ro.ubbcluj.cs.ams.course.dto.ActivityTypes;
+import ro.ubbcluj.cs.ams.course.dto.course.CourseNameResponse;
 import ro.ubbcluj.cs.ams.course.dto.course.CourseDtoRequest;
-import ro.ubbcluj.cs.ams.course.dto.course.CourseDtoResponse;
+import ro.ubbcluj.cs.ams.course.dto.course.CourseResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.course.CoursesDto;
 import ro.ubbcluj.cs.ams.course.dto.cplink.CpLinkResponseDto;
+import ro.ubbcluj.cs.ams.course.dto.participation.ParticipantsResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.participation.ParticipationsResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostRequestDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostResponseDto;
@@ -23,6 +26,7 @@ import ro.ubbcluj.cs.ams.course.dto.post.PostsResponseDto;
 import ro.ubbcluj.cs.ams.course.health.HandleServicesHealthRequests;
 import ro.ubbcluj.cs.ams.course.health.ServicesHealthChecker;
 import ro.ubbcluj.cs.ams.course.model.tables.Course;
+import ro.ubbcluj.cs.ams.course.model.tables.pojos.ActivityType;
 import ro.ubbcluj.cs.ams.course.model.tables.pojos.Participation;
 import ro.ubbcluj.cs.ams.course.service.Service;
 import ro.ubbcluj.cs.ams.course.service.exception.CourseExceptionType;
@@ -82,7 +86,7 @@ public class CourseController {
             @ApiResponse(code = 400, message = "DUPLICATE_SUBJECT", response = CourseExceptionType.class),
     })
     @RequestMapping(value = "/", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CourseDtoResponse> addSubject(@RequestBody @Valid CourseDtoRequest subject, BindingResult result) {
+    public ResponseEntity<CourseResponseDto> addSubject(@RequestBody @Valid CourseDtoRequest subject, BindingResult result) {
 
         LOGGER.info("+++++++++LOGGING addSubject+++++++++");
         loggingCourse(subject);
@@ -90,7 +94,7 @@ public class CourseController {
         if (result.hasErrors())
             throw new CourseServiceException("Invalid subject " + subject, CourseExceptionType.INVALID_COURSE, HttpStatus.BAD_REQUEST);
 
-        CourseDtoResponse subjectDtoResponse = service.addCourse(subject);
+        CourseResponseDto subjectDtoResponse = service.addCourse(subject);
 
         LOGGER.info("+++++++++SUCCESSFUL LOGGING addSubject+++++++++");
         return new ResponseEntity<>(subjectDtoResponse, HttpStatus.OK);
@@ -101,8 +105,8 @@ public class CourseController {
             @ApiResponse(code = 200, message = "SUCCESS", response = CpLinkResponseDto.class),
             @ApiResponse(code = 404, message = "NOT FOUND", response = CourseExceptionType.class)
     })
-    @RequestMapping(value = "/assign", method = RequestMethod.GET, params = {"subjectId", "activityTypeId", "professorUsername"}, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CpLinkResponseDto> findSpLink(@RequestParam(name = "subjectId") String subjectId, @RequestParam(name = "activityTypeId") Integer activityTypeId, @RequestParam(name = "professorUsername") String professorUsername) {
+    @RequestMapping(value = "/assign", method = RequestMethod.GET, params = {"courseId", "activityTypeId", "professorUsername"}, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CpLinkResponseDto> findSpLink(@RequestParam(name = "courseId") String subjectId, @RequestParam(name = "activityTypeId") Integer activityTypeId, @RequestParam(name = "professorUsername") String professorUsername) {
 
         LOGGER.info("========== LOGGING findSpLink ==========");
         LOGGER.info("SubjectId {}, ActivityTypeId {}, ProfessorUsername {}", subjectId, activityTypeId, professorUsername);
@@ -178,7 +182,7 @@ public class CourseController {
 
     })
     @RequestMapping(value = "/{courseId}/events/participations", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Participation> addOrDeleteParticipation(@RequestBody Participation participation, Principal principal) {
+    public ResponseEntity<Participation> addOrDeleteParticipation(@RequestBody Participation participation, Principal principal, @RequestHeader(name = "Authorization") String auth) {
 
         LOGGER.info("========== LOGGING addOrDeleteParticipation ==========");
 
@@ -187,7 +191,7 @@ public class CourseController {
         }
 
         participation.setUserId(principal.getName());
-        participation = service.addOrDeleteParticipation(participation);
+        participation = service.addOrDeleteParticipation(participation, auth);
 
         LOGGER.info("========== SUCCESSFUL LOGGING addOrDeleteParticipation ==========");
         return new ResponseEntity<>(participation, HttpStatus.OK);
@@ -207,29 +211,69 @@ public class CourseController {
         return new ResponseEntity<>(participations, HttpStatus.OK);
     }
 
-//    @ApiOperation(value = "Get full details about courses when given ids")
-//    @ApiResponses(value = {
-////            @ApiResponse(code = 200, message = "SUCCESS", response = SpLinkResponseDto.class),
-////            @ApiResponse(code = 404, message = "NOT FOUND", response = SubjectExceptionType.class)
-//    })
-//    @RequestMapping(value = "/courses", method = RequestMethod.GET, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-//    public ResponseEntity<?> findFullDetailsCoursesWhenGivenIds(@RequestBody @Valid CoursesIdsDto coursesIdsDto) {
-//
-//        logger.info("========== LOGGING findFullDetailsCoursesWhenGivenIds ==========");
-//        logger.info("Courses ids {}", coursesIdsDto);
-//
-//
-//
-//        logger.info("========== SUCCESSFUL LOGGING findFullDetailsCoursesWhenGivenIds ==========");
-//        return new ResponseEntity<>(, HttpStatus.OK);
-//    }
+    @ApiOperation(value = "Find all activity types")
+    @ApiResponses(value = {
+    })
+    @RequestMapping(value = "/activity-types", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ActivityTypes> findAllActivityTypes() {
 
-    private void loggingCourse(CourseDtoRequest subject) {
+        LOGGER.info("========== LOGGING findAllActivityTypes ==========");
 
-        LOGGER.info("Subject name: {}", subject.getName());
-        LOGGER.info("Subject credits: {}", subject.getCredits());
-        LOGGER.info("Subject specialization: {}", subject.getSpecId());
-        LOGGER.info("Subject year: {}", subject.getYear());
+        ActivityTypes activityTypes = service.findAllActivityTypes();
+
+        LOGGER.info("========== SUCCESSFULLY LOGGING findAllActivityTypes ==========");
+        return new ResponseEntity<>(activityTypes, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Find activity type by id")
+    @ApiResponses(value = {
+    })
+    @RequestMapping(value = "/activity-type", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"typeId"})
+    public ResponseEntity<ActivityType> findActivityTypeById(@RequestParam(name = "typeId") int typeId) {
+
+        LOGGER.info("========== LOGGING findActivityTypeById ==========");
+
+        ActivityType activityType = service.findActivityTypeById(typeId);
+
+        LOGGER.info("========== SUCCESSFULLY LOGGING findActivityTypeById ==========");
+        return new ResponseEntity<>(activityType, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Find course by id")
+    @ApiResponses(value = {
+    })
+    @RequestMapping(value = "/courses", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"courseId"})
+    public ResponseEntity<CourseNameResponse> findCourseById(@RequestParam(name = "courseId") String courseId) {
+
+        LOGGER.info("========== LOGGING findCourseById ==========");
+
+        CourseNameResponse courseNameResponse = service.findCourseById(courseId);
+
+        LOGGER.info("========== SUCCESSFULLY LOGGING findCourseById ==========");
+        return new ResponseEntity<>(courseNameResponse, HttpStatus.OK);
+    }
+
+
+    @ApiOperation(value = "Find all event participations")
+    @ApiResponses(value = {
+    })
+    @RequestMapping(value = "/{courseId}/events/{postId}/participations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ParticipantsResponseDto> findEventParticipants(@PathVariable(name = "postId") Integer postId, @RequestHeader(name = "Authorization") String auth) {
+
+        LOGGER.info("========== LOGGING findEventParticipants ==========");
+
+        ParticipantsResponseDto participantsResponseDto = service.findEventParticipants(postId, auth);
+
+        LOGGER.info("========== SUCCESSFULLY LOGGING findEventParticipants ==========");
+        return new ResponseEntity<>(participantsResponseDto, HttpStatus.OK);
+    }
+
+    private void loggingCourse(CourseDtoRequest course) {
+
+        LOGGER.info("Course name: {}", course.getName());
+        LOGGER.info("Course credits: {}", course.getCredits());
+        LOGGER.info("Course specialization: {}", course.getSpecId());
+        LOGGER.info("Course year: {}", course.getYear());
     }
 
     @ExceptionHandler({CourseServiceException.class})

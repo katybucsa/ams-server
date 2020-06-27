@@ -21,21 +21,20 @@ VALUES (1, 1), /*create-> admin */
        (4, 1), /* delete admin */
        (2, 2), /* read operator */
        (3, 2); /* update operator */
-insert into oauth_user (id, username, password, email, enabled, account_non_expired, credentials_non_expired,
+insert into oauth_user (id, username, first_name,last_name, password, email, enabled, account_non_expired, credentials_non_expired,
                         account_non_locked)
-VALUES ('1', 'dana', '$2a$10$/K4k2PWk9l5N1Mg8uBdFp.a0nJT3OxdxJHlKpQG9CScm0V185lY/u', 'dana@yahoo.com', '1', '1', '1',
+VALUES ('1', 'dana','Hojbota','Dana', '$2a$10$/K4k2PWk9l5N1Mg8uBdFp.a0nJT3OxdxJHlKpQG9CScm0V185lY/u', 'dana@yahoo.com', '1', '1', '1',
         '1');
-insert into oauth_user (id, username, password, email, enabled, account_non_expired, credentials_non_expired,
+insert into oauth_user (id, username, first_name,last_name, password, email, enabled, account_non_expired, credentials_non_expired,
                         account_non_locked)
-VALUES ('2', 'roxana', '$2a$10$tUJSiu11slhhYj4Rv1X3/.KG4NmvWy.zyK6oeewkYIeGlxoFgUPn2', 'roxana@yahoo.com', '1', '1',
+VALUES ('2', 'roxana','Gales','Roxana', '$2a$10$tUJSiu11slhhYj4Rv1X3/.KG4NmvWy.zyK6oeewkYIeGlxoFgUPn2', 'roxana@yahoo.com', '1', '1',
         '1', '1');
-insert into oauth_user (id, username, password, email, enabled, account_non_expired, credentials_non_expired,
+insert into oauth_user (id, username, first_name,last_name, password, email, enabled, account_non_expired, credentials_non_expired,
                         account_non_locked)
-VALUES ('3', 'katy', '$2a$10$tUJSiu11slhhYj4Rv1X3/.KG4NmvWy.zyK6oeewkYIeGlxoFgUPn2', 'katy@yahoo.com', '1', '1', '1',
+VALUES ('3', 'katy', 'Ecaterina','Bucsa', '$2a$10$tUJSiu11slhhYj4Rv1X3/.KG4NmvWy.zyK6oeewkYIeGlxoFgUPn2', 'katy@yahoo.com', '1', '1', '1',
         '1');
 
 INSERT INTO ROLE_USER (ROLE_ID, USER_ID)
 VALUES (1, 1) /* dana-PROFESSOR */,
-       (2, 2) /* roxana-STUDENT */ ,
        (2, 3),
        (3, 2);

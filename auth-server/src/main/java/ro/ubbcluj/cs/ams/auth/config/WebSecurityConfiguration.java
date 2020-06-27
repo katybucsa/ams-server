@@ -18,7 +18,7 @@ import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 import javax.sql.DataSource;
 
 @Configuration
-//@EnableWebSecurity
+@EnableWebSecurity
 public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     @Autowired
@@ -56,10 +56,10 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity httpSecurity) throws Exception {
 
-        httpSecurity.csrf().disable()
+        httpSecurity.cors().and()
+                .csrf().disable()
                 .authorizeRequests()
-                .anyRequest().permitAll();
-//                .antMatchers("/login", "/oauth/**").permitAll()
-//                .anyRequest().authenticated();
+                .antMatchers("/login", "/refresh", "/oauth/**").permitAll()
+                .anyRequest().authenticated();
     }
 }

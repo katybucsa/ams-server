@@ -88,4 +88,17 @@ public class SubscriptionRepoImpl implements SubscriptionRepo {
         LOGGER.info("========== SUCCESSFULLY LOGGING findSubscriptionsByUserId ==========");
         return subscriptionRecords;
     }
+
+    @Override
+    public List<SubscriptionRecord> findUsersSubscriptions(List<String> users) {
+
+        LOGGER.info("========== LOGGING findUsersSubscriptions ==========");
+
+        List<SubscriptionRecord> subscriptionRecords = dsl.selectFrom(Tables.SUBSCRIPTION)
+                .where(Tables.SUBSCRIPTION.USERNAME.in(users))
+                .fetch();
+
+        LOGGER.info("========== SUCCESSFULLY LOGGING findUsersSubscriptions ==========");
+        return subscriptionRecords;
+    }
 }

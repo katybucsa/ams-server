@@ -1,5 +1,6 @@
 package ro.ubbcluj.cs.ams.notification.config;
 
+import org.jooq.SQLDialect;
 import org.jooq.impl.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -32,7 +33,7 @@ public class NotificationConfig {
         jooqConfiguration.set(connectionProvider());
         jooqConfiguration
                 .set(new DefaultExecuteListenerProvider(new DefaultExecuteListener()));
-
+        jooqConfiguration.set(SQLDialect.POSTGRES);
         return jooqConfiguration;
     }
 }

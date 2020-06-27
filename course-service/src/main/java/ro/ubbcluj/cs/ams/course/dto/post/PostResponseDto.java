@@ -23,6 +23,8 @@ public class PostResponseDto implements Serializable {
 
     private String courseId;
 
+    private String courseName;
+
     private String date;
 
     private String type;

@@ -1,6 +1,7 @@
 package ro.ubbcluj.cs.ams.gateway.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -17,15 +18,20 @@ public class GatewayConfiguration extends ResourceServerConfigurerAdapter {
     @Autowired
     private GatewayProperties props;
 
+    @Bean
+    public GatewayErrorFilter buildGatewayFilter() {
+
+        return new GatewayErrorFilter();
+    }
+
     @Override
     public void configure(HttpSecurity http) throws Exception {
 
         http.csrf().disable()
                 .logout().disable()
                 .formLogin().disable()
-                .cors().and()
                 .authorizeRequests()
-                .antMatchers(props.getLogin(),"/auth/oauth/**").permitAll()
+                .antMatchers(props.getLogin(), "/auth/refresh", "/auth/oauth/*").permitAll()
 //                .antMatchers(HttpMethod.POST,"/*/actuator/shutdown").hasAuthority("ADMIN")
                 .regexMatchers(HttpMethod.POST, "gateway/health\\?.*$", "gateway/present\\?.*$").permitAll()//.access("#oauth2.hasScope('health_mod')")
                 .antMatchers(HttpMethod.GET, "gateway/running").hasAuthority("ADMIN")

@@ -29,7 +29,7 @@ public class MessageConsumer {
     @JmsListener(destination = "notification-queue")
     public void listener(String json) {
 
-        LOGGER.info("========== Message received {}", json);
+        LOGGER.info("========== Message received {} ==========", json);
 
         PostResponseDto postResponseDto = objectMapper.readValue(json, PostResponseDto.class);
         sendNotificationHandler.sendNotification(postResponseDto);
@@ -39,7 +39,7 @@ public class MessageConsumer {
     @JmsListener(destination = "particip-queue")
     public void listenerParticip(String json) {
 
-        LOGGER.info("========== Message received {}", json);
+        LOGGER.info("========== Message received {} ==========", json);
 
         ParticipationDetalis participationDetalis = objectMapper.readValue(json, ParticipationDetalis.class);
         sendNotificationHandler.sendParticipNotification(participationDetalis);
@@ -49,7 +49,7 @@ public class MessageConsumer {
     @JmsListener(destination = "admin-queue")
     public void listenerAdminQueue(String json) {
 
-        LOGGER.info("========== Message received {}", json);
+        LOGGER.info("========== Message received {} ==========", json);
 
         ServiceState serviceState = objectMapper.readValue(json, ServiceState.class);
         sendNotificationHandler.sendAdminNotification(serviceState);

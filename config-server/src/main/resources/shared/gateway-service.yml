@@ -7,10 +7,53 @@ hystrix:
             timeoutInMilliseconds: 91000
 
 ribbon:
+#  eureka:
+#    enabled:
+#      true
+  restclient:
+    enabled: true
   ReadTimeout: 30000
-  ConnectTimeout: 15000
+  ConnectTimeout: 30000
+auth-service:
+  ribbon:
+    MaxAutoRetries: 5
+    MaxAutoRetriesNextServer: 5
+    OkToRetryOnAllOperations: true
+    ReadTimeout: 30000
+    ConnectTimeout: 30000
+assignment-service:
+  ribbon:
+    MaxAutoRetries: 5
+    MaxAutoRetriesNextServer: 5
+    OkToRetryOnAllOperations: true
+    ReadTimeout: 30000
+    ConnectTimeout: 30000
+course-service:
+  ribbon:
+    MaxAutoRetries: 5
+    MaxAutoRetriesNextServer: 5
+    OkToRetryOnAllOperations: true
+    ReadTimeout: 30000
+    ConnectTimeout: 30000
+notification-service:
+  ribbon:
+    MaxAutoRetries: 5
+    MaxAutoRetriesNextServer: 5
+    OkToRetryOnAllOperations: true
+    ReadTimeout: 30000
+    ConnectTimeout: 30000
+student-service:
+  ribbon:
+    MaxAutoRetries: 5
+    MaxAutoRetriesNextServer: 5
+    OkToRetryOnAllOperations: true
+    ReadTimeout: 30000
+    ConnectTimeout: 30000
+
+#    retryableStatusCodes: 404,502,500
 
 zuul:
+  retryable: true
   sensitiveHeaders: Cookie,Set-Cookie
   host:
     connect-timeout-millis: 40000
@@ -20,31 +63,32 @@ zuul:
       path: /auth/**
       serviceId: auth-service
       stripPrefix: false
-    attendance-service:
-      path: /attendance/**
-      serviceId: attendance-service
-      stripPrefix: false
+      retryable: true
     assignment-service:
       path: /assignment/**
       serviceId: assignment-service
       stripPrefix: false
+      retryable: true
     course-service:
       path: /course/**
       serviceId: course-service
       stripPrefix: false
+      retryable: true
     notification-service:
       path: /notification/**
       serviceId: notification-service
       stripPrefix: false
+      retryable: true
     student-service:
       path: /student/**
       serviceId: student-service
       stripPrefix: false
+      retryable: true
     gateway-service:
       path: /gateway/**
       serviceId: gateway-service
       stripPrefix: false
-
+      retryable: true
 server:
 #  servlet:
 #    context-path: /gateway

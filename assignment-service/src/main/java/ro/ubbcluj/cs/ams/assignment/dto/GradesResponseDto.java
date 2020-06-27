@@ -13,5 +13,5 @@ import java.util.List;
 @Builder
 public class GradesResponseDto {
 
-    private List<GradeResponseDto> data;
+    private List<StudentGrade> data;
 }

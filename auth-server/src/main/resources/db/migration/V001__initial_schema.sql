@@ -30,6 +30,8 @@ create table role (
 create table oauth_user (
   id serial,
   username varchar(100) not null,
+  first_name varchar(32) not null,
+  last_name varchar(32) not null,
   password varchar(1024) not null,
   email varchar(1024) not null,
   enabled smallint not null,

@@ -26,8 +26,8 @@ public class AssignmentRepoImpl implements AssignmentRepo {
         logger.info("========== Before addGrade ==========");
         logger.info("Grade {}", grade);
 
-        GradeRecord gradeRecord = dsl.insertInto(Tables.GRADE, Tables.GRADE.TYPE_ID, Tables.GRADE.TEACHER, Tables.GRADE.STUDENT, Tables.GRADE.VALUE, Tables.GRADE.SUBJECT_ID, Tables.GRADE.DATE)
-                .values(grade.getTypeId(), grade.getTeacher(), grade.getStudent(), grade.getValue(), grade.getSubjectId(), grade.getDate())
+        GradeRecord gradeRecord = dsl.insertInto(Tables.GRADE, Tables.GRADE.TYPE_ID, Tables.GRADE.TEACHER, Tables.GRADE.STUDENT, Tables.GRADE.VALUE, Tables.GRADE.COURSE_ID, Tables.GRADE.DATE)
+                .values(grade.getTypeId(), grade.getTeacher(), grade.getStudent(), grade.getValue(), grade.getCourseId(), grade.getDate())
                 .returning()
                 .fetchOne();
         logger.info("========== addGrade successful ==========");
@@ -35,17 +35,17 @@ public class AssignmentRepoImpl implements AssignmentRepo {
     }
 
     @Override
-    public List<GradeRecord> getAllGradesByStudentAndSubjectId(String studentUsername, String subjectId) {
+    public List<GradeRecord> getAllGradesByStudentAndCourseId(String studentUsername, String courseId) {
 
-        logger.info("========== LOGGING getAllGradesByStudentAndSubjectId ==========");
-        logger.info("Student username: {}, subject id: {}", studentUsername, subjectId);
+        logger.info("========== LOGGING getAllGradesByStudentAndCourseId ==========");
+        logger.info("Student username: {}, course id: {}", studentUsername, courseId);
 
         List<GradeRecord> gradeRecordList = dsl.selectFrom(Tables.GRADE)
                 .where(Tables.GRADE.STUDENT.eq(studentUsername))
-                .and(Tables.GRADE.SUBJECT_ID.eq(subjectId))
+                .and(Tables.GRADE.COURSE_ID.eq(courseId))
                 .fetch();
 
-        logger.info("========== SUCCESSFUL LOGGING getAllGradesByStudentAndSubjectId ==========");
+        logger.info("========== SUCCESSFUL LOGGING getAllGradesByStudentAndCourseId ==========");
         return gradeRecordList;
     }
 }

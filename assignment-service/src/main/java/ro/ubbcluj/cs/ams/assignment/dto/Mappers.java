@@ -8,11 +8,13 @@ import java.util.List;
 
 
 @Mapper(componentModel = "spring")
-public interface GradeMapper {
+public interface Mappers {
 
     Grade gradeDtoToGrade(GradeDto gradeDto);
 
     GradeResponseDto gradeRecordToGradeResponseDto(GradeRecord gradeRecord);
 
     List<GradeResponseDto> gradeRecordsToGradeResponseDtos(List<GradeRecord> gradeRecordList);
+
+    List<Grade> gradeRecordToGrade(List<GradeRecord> allGradesByStudentAndCourseId);
 }

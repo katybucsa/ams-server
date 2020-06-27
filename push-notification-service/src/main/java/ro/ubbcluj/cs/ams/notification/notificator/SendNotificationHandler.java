@@ -1,36 +1,25 @@
 package ro.ubbcluj.cs.ams.notification.notificator;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
 import ro.ubbcluj.cs.ams.notification.dto.*;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Notification;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Subscription;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.SubscriptionKeys;
-import ro.ubbcluj.cs.ams.notification.model.tables.records.SubscriptionRecord;
 import ro.ubbcluj.cs.ams.notification.service.CryptoService;
-import ro.ubbcluj.cs.ams.notification.service.ServerKeys;
 import ro.ubbcluj.cs.ams.notification.service.Service;
 import ro.ubbcluj.cs.ams.utils.common.ServiceState;
-import rx.subscriptions.Subscriptions;
 
-import javax.annotation.PostConstruct;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -54,6 +43,10 @@ public class SendNotificationHandler {
     @Autowired
     private PushNotificator pushNotificator;
 
+    @Autowired
+    @Qualifier("WebClientBuilderBean")
+    private WebClient.Builder webClientBuilder;
+
     private final Map<Integer, SubscriptionKeys> localSubscriptionKeys = new ConcurrentHashMap<>();
 
     private final Map<Subscription, CompletableFuture<Boolean>> futures = new ConcurrentHashMap<>();
@@ -61,23 +54,43 @@ public class SendNotificationHandler {
     private final static Logger LOGGER = LoggerFactory.getLogger(SendNotificationHandler.class);
 
     @SneakyThrows
+    @Async
     public void sendNotification(PostResponseDto postResponseDto) {
 
         Notification notification = new Notification();
         notification.setPostId(postResponseDto.getId());
         notification.setCourseId(postResponseDto.getCourseId());
-        notification.setTitle(postResponseDto.getTitle());
+        notification.setType("new_post");
+        notification.setTitle("New post from course " + postResponseDto.getCourseName() + ": " + postResponseDto.getTitle());
         notification.setBody(postResponseDto.getText());
-        Notification savedNotification = service.addNotification(notification);
-        List<Subscription> subscriptions = service.findSubscriptionsByUserRole("STUDENT");
+        Notification savedNotification = service.addOrUpdateNotification(notification);
+        List<String> enrolledStudents = findAllEnrolledStudents(postResponseDto.getCourseId());
+        List<Subscription> subscriptions;
+        if (enrolledStudents.size() == 0) {
+            subscriptions = new ArrayList<>();
+        } else
+            subscriptions = service.findUsersSubscriptions(enrolledStudents);
+        //        if (!sentUsers.contains(subscription.getUsername()) && !subscription.getUserRole().equals("ADMIN")) {
+
+        enrolledStudents.forEach(student->{
+            service.addUserNotification(student,savedNotification.getId(),savedNotification.getPostId(),"STUDENT");
+        });
+//        service.addUserNotification(
+//                subscription.getUsername(),
+//                ((Notification) message).getId(),
+//                ((Notification) message).getPostId(),
+//                subscription.getUserRole());
+//        sentUsers.add(subscription.getUsername());
+//        }
         sendPushMessageToAllSubscribers(subscriptions, savedNotification);
     }
 
     @SneakyThrows
+    @Async
     public void sendParticipNotification(ParticipationDetalis participationDetalis) {
 
         List<Subscription> subscriptions = service.findSubscriptionsByUserId(participationDetalis.getProfessorId());
-        String body = null;
+        String body;
         if (participationDetalis.getParticipants().size() > 2) {
             body = participationDetalis.getParticipants().get(0) +
                     "," + participationDetalis.getParticipants().get(1) +
@@ -98,13 +111,16 @@ public class SendNotificationHandler {
         Notification notification = new Notification();
         notification.setPostId(participationDetalis.getPostId());
         notification.setCourseId(participationDetalis.getCourseId());
+        notification.setType("new_particip");
         notification.setTitle(participationDetalis.getCourseName());
         notification.setBody(body);
-        sendPushMessageToAllSubscribers(subscriptions, notification);
-
+        Notification savedNotification = service.addOrUpdateNotification(notification);
+        service.addUserNotification(participationDetalis.getProfessorId(),savedNotification.getId(),savedNotification.getPostId(),"PROFESSOR");
+        sendPushMessageToAllSubscribers(subscriptions, savedNotification);
     }
 
     @SneakyThrows
+    @Async
     public void sendAdminNotification(ServiceState serviceState) {
 
         List<Subscription> subscriptions = service.findSubscriptionsByUserRole("ADMIN");
@@ -116,16 +132,17 @@ public class SendNotificationHandler {
         if (serviceState.getState().equals("running")) {
             notification.setTitle("Service running again");
             notification.setBody("Service " + serviceState.getService().split("[-]")[0].toUpperCase() + " is running");
-        }else{
+        } else {
             notification.setTitle("Service stopped running");
             notification.setBody("Service " + serviceState.getService().split("[-]")[0].toUpperCase() + " has stopped");
         }
+
         sendPushMessageToAllSubscribers(subscriptions, notification);
     }
 
     @SneakyThrows
     private void sendPushMessageToAllSubscribers(List<Subscription> subs,
-                                                 Object message) throws JsonProcessingException {
+                                                 Object message) {
 
         for (Subscription subscription : subs) {
             try {
@@ -157,5 +174,15 @@ public class SendNotificationHandler {
         }
     }
 
+    private List<String> findAllEnrolledStudents(String courseId) {
 
+        return Objects.requireNonNull(webClientBuilder
+                .build()
+                .get()
+                .uri("http://student-service/student/enrollment?courseId=" + courseId)
+                .retrieve()
+                .bodyToMono(EnrolledStudents.class)
+                .block())
+                .getData();
+    }
 }

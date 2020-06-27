@@ -1,4 +1,4 @@
-package ro.ubbcluj.cs.ams.auth.config;
+package ro.ubbcluj.cs.ams.gateway.config;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -11,9 +11,9 @@ import java.io.IOException;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
-public class CorsFilter implements Filter {
+public class CorsFilterConfig implements Filter {
 
-    public CorsFilter() {
+    public CorsFilterConfig() {
     }
 
     @Override
@@ -23,7 +23,7 @@ public class CorsFilter implements Filter {
         response.setHeader("Access-Control-Allow-Origin", "*");
         response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE");
         response.setHeader("Access-Control-Max-Age", "3600");
-        response.setHeader("Access-Control-Allow-Headers", "x-requested-with, authorization");
+        response.setHeader("Access-Control-Allow-Headers", "*");
 
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             response.setStatus(HttpServletResponse.SC_OK);

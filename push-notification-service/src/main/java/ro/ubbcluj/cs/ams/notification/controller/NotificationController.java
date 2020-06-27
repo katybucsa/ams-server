@@ -4,21 +4,22 @@ import org.jooq.tools.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.bind.annotation.*;
+import ro.ubbcluj.cs.ams.notification.dto.NotifNr;
 import ro.ubbcluj.cs.ams.notification.dto.SubscriptionDto;
 import ro.ubbcluj.cs.ams.notification.dto.SubscriptionEndpoint;
+import ro.ubbcluj.cs.ams.notification.dto.UserNotifs;
 import ro.ubbcluj.cs.ams.notification.health.HandleServicesHealthRequests;
 import ro.ubbcluj.cs.ams.notification.health.ServicesHealthChecker;
-import ro.ubbcluj.cs.ams.notification.model.tables.UserNotif;
-import ro.ubbcluj.cs.ams.notification.notificator.SendNotificationHandler;
+import ro.ubbcluj.cs.ams.notification.model.tables.pojos.UserNotif;
 import ro.ubbcluj.cs.ams.notification.service.ServerKeys;
 import ro.ubbcluj.cs.ams.notification.service.Service;
 
 import java.security.Principal;
+import java.util.stream.Collectors;
 
 @RestController
 public class NotificationController {
@@ -63,8 +64,6 @@ public class NotificationController {
     public byte[] publicSigningKey() {
 
         byte[] arr = this.serverKeys.getPublicKeyUncompressed();
-        System.out.println("=====");
-        System.out.println(arr);
         return arr;
     }
 
@@ -72,8 +71,6 @@ public class NotificationController {
     public String publicSigningKeyBase64() {
 
         String str = this.serverKeys.getPublicKeyBase64();
-        System.out.println("=====");
-        System.out.println(str);
         return str;
     }
 
@@ -83,12 +80,13 @@ public class NotificationController {
 
         LOGGER.info("========== LOGGING subscribe for user {} ==========", principal.getName());
         subscription.setUsername(principal.getName());
+        System.out.println();
         subscription.setUserRole(((OAuth2Authentication) principal)
-                .getUserAuthentication()
                 .getAuthorities()
-                .iterator()
-                .next()
-                .getAuthority());
+                .stream()
+                .filter(x -> Character.isUpperCase(x.getAuthority().charAt(0)))
+                .collect(Collectors.toList())
+                .get(0).getAuthority());
 
         service.addSubscription(subscription);
 
@@ -117,87 +115,37 @@ public class NotificationController {
         return new ResponseEntity<>(new JSONObject().put("isSubscribed", existsSubsc), HttpStatus.OK);
     }
 
-    @RequestMapping(value = "" ,method = RequestMethod.GET)
-    public ResponseEntity<UserNotif> findNotificationsForUser(Principal principal){
+    @RequestMapping(value = "/notifs", method = RequestMethod.GET)
+    public ResponseEntity<UserNotifs> findNotificationsForUser(Principal principal) {
 
-        return null;
+        LOGGER.info("========== LOGGING findNotificationsForUser {} ==========", principal.getName());
+
+        UserNotifs userNotifs = service.findAllNotificationsForUser(principal.getName());
+        LOGGER.info("========== SUCCESSFULLY LOGGING findNotificationsForUser {} ==========", principal.getName());
+        return new ResponseEntity<>(userNotifs, HttpStatus.OK);
     }
 
-//    @PostMapping("/isSubscribedAngular")
-//    public boolean isSubscribedAngular(@RequestBody SubscriptionEndpoint subscription) {
-//        return this.subscriptionsAngular.containsKey(subscription.getEndpoint());
-//    }
+    @RequestMapping(value = "/notifs/nr", method = RequestMethod.GET)
+    public ResponseEntity<NotifNr> findNotificationsNrForUser(Principal principal) {
 
-//    @GetMapping(path = "/lastNumbersAPIFact")
-//    public String lastNumbersAPIFact() {
-//        return this.lastNumbersAPIFact;
-//    }
+        LOGGER.info("========== LOGGING findNotificationsNrForUser {} ==========", principal.getName());
 
-//    @Scheduled(fixedDelay = 20_000)
-//    public void numberFact() {
-//        if (this.subscriptions.isEmpty()) {
-//            return;
-//        }
-//
-//        try {
-//            HttpResponse<String> response = this.httpClient.send(
-//                    HttpRequest.newBuilder(URI.create("http://numbersapi.com/random/date")).build(),
-//                    BodyHandlers.ofString());
-//
-//            if (response.statusCode() == 200) {
-//                this.lastNumbersAPIFact = response.body();
-//                sendPushMessageToAllSubscribersWithoutPayload();
-//            }
-//        } catch (IOException | InterruptedException e) {
-//            LOGGER.error("fetch number fact", e);
-//        }
-//    }
+        int nr = service.findNotSeenNotifications(principal.getName());
 
-//    @Scheduled(fixedDelay = 30_000)
-//    public void chuckNorrisJoke() {
-//        if (this.subscriptions.isEmpty() && this.subscriptionsAngular.isEmpty()) {
-//            return;
-//        }
-//
-//        try {
-//            HttpResponse<String> response = this.httpClient.send(HttpRequest
-//                            .newBuilder(URI.create("https://api.icndb.com/jokes/random")).build(),
-//                    BodyHandlers.ofString());
-//            if (response.statusCode() == 200) {
-//                Map<String, Object> jokeJson = this.objectMapper.readValue(response.body(),
-//                        Map.class);
-//
-//                @SuppressWarnings("unchecked")
-//                Map<String, Object> value = (Map<String, Object>) jokeJson.get("value");
-//                int id = (int) value.get("id");
-//                String joke = (String) value.get("joke");
-//
-//                Notification notification = new Notification("Chuck Norris Joke: " + id);
-//                notification.setBody(joke);
-//                notification.setIcon("assets/chuck.png");
-//
-//                sendPushMessageToAllSubscribers(this.subscriptions,
-//                        new PushMessage("Chuck Norris Joke: " + id, joke));
-//
-//
-////                sendPushMessageToAllSubscribers(this.subscriptionsAngular,
-////                        Map.of("notification", notification));
-//            }
-//        } catch (IOException | InterruptedException e) {
-//            LOGGER.error("fetch chuck norris", e);
-//        }
-//    }
+        NotifNr notifNr = NotifNr.builder().nr(nr).build();
+        LOGGER.info("========== SUCCESSFULLY LOGGING findNotificationsNrForUser {} ==========", principal.getName());
+        return new ResponseEntity<>(notifNr, HttpStatus.OK);
+    }
 
-//    private void sendPushMessageToAllSubscribersWithoutPayload() {
-//        Set<String> failedSubscriptions = new HashSet<>();
-//        for (Subscription subscription : this.subscriptions.values()) {
-//            boolean remove = sendPushMessage(subscription, null);
-//            if (remove) {
-//                failedSubscriptions.add(subscription.getEndpoint());
-//            }
-//        }
-//        failedSubscriptions.forEach(this.subscriptions::remove);
-//    }
-//
-//
+    @RequestMapping(value = "/notifs", method = RequestMethod.POST)
+    public ResponseEntity<UserNotif> updateUserNotification(@RequestBody UserNotif userNotif, Principal principal) {
+
+        LOGGER.info("========== LOGGING updateUserNotification {} ==========", principal.getName());
+
+        userNotif.setUserId(principal.getName());
+        UserNotif updatedUserNotif = service.updateUserNotification(userNotif);
+
+        LOGGER.info("========== SUCCESSFULLY LOGGING updateUserNotification {} ==========", principal.getName());
+        return new ResponseEntity<>(updatedUserNotif, HttpStatus.OK);
+    }
 }

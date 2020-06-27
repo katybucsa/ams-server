@@ -119,7 +119,7 @@ public class BeansConfig {
 
     private static List<Queue> QUEUES = Arrays.asList(
             assignmentHQueue(),
-            attendanceHQueue(),
+//            attendanceHQueue(),
             authHQueue(),
             courseHQueue(),
             gatewayHQueue(),

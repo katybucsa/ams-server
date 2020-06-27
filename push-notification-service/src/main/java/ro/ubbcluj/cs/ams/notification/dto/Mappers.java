@@ -4,9 +4,11 @@ import org.mapstruct.Mapper;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Notification;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Subscription;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.SubscriptionKeys;
+import ro.ubbcluj.cs.ams.notification.model.tables.pojos.UserNotif;
 import ro.ubbcluj.cs.ams.notification.model.tables.records.NotificationRecord;
 import ro.ubbcluj.cs.ams.notification.model.tables.records.SubscriptionKeysRecord;
 import ro.ubbcluj.cs.ams.notification.model.tables.records.SubscriptionRecord;
+import ro.ubbcluj.cs.ams.notification.model.tables.records.UserNotifRecord;
 
 import java.util.List;
 
@@ -24,4 +26,8 @@ public interface Mappers {
     SubscriptionKeys subscriptionKeysDtoToSubscriptionKeys(SubscriptionKeysDto keys);
 
     SubscriptionKeys subscriptionKeysRecordToSubscriptionKeys(SubscriptionKeysRecord subscriptionKeysRecord);
+
+    List<UserNotif> userNotifRecordsToUserNotifs(List<UserNotifRecord> allNotificationsForUser);
+
+    UserNotif userNotifRecordToUserNotif(UserNotifRecord updateUserNotif);
 }

@@ -9,7 +9,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
@@ -64,8 +66,18 @@ public class ServicesHealthCheckerAsync {
     private final List<String> aliveServices = new ArrayList<>();
     private List<MicroserviceDetails> detectedServices = new ArrayList<>();
     private final List<MicroserviceDetails> sentServices = new ArrayList<>();
-    private static final long SEND_INTERVAL = 2000;
+    private static final long SEND_INTERVAL = 100;
     private static boolean allStarted = false;
+
+    @SneakyThrows
+    @EventListener(ApplicationReadyEvent.class)
+    public void afterStartup() {
+
+        jmsTemplate.convertAndSend(adminQueue, objectMapper.writeValueAsString(ServiceState.builder()
+                .service(thisAppName.split("[-]")[0])
+                .state("running")
+                .build()));
+    }
 
     @SneakyThrows
     @Scheduled(fixedDelay = SEND_INTERVAL)
@@ -73,10 +85,6 @@ public class ServicesHealthCheckerAsync {
 
         if (props.getNumber() == eurekaClient.getApplications().size() && !allStarted) {
 
-            jmsTemplate.convertAndSend(adminQueue, objectMapper.writeValueAsString(ServiceState.builder()
-                    .service(thisAppName.split("[-]")[0])
-                    .state("running")
-                    .build()));
             jmsTemplate.setReceiveTimeout(2000);
             jmsTemplate.receive(thisAppName.replace("service", "hqueue"));
             jmsTemplate.receive(thisAppName.replace("service", "rqueue"));
@@ -131,15 +139,11 @@ public class ServicesHealthCheckerAsync {
                     if (iAmTheLeader()) {
                         LOGGER.info("========== I am the leader - {}", thisAppName);
 
-                        jmsTemplate.convertAndSend(adminQueue, objectMapper.writeValueAsString(ServiceState.builder()
-                                .service(service.getName().split("[-]")[0])
-                                .state("error")
-                                .build()));
-                        Runtime.getRuntime().exec("cmd /c start cmd.exe /K \"java -jar " + service.getJarPath() + "\"");
+                        Runtime.getRuntime().exec("cmd /c start /min cmd.exe /K \"java -Xverify:none -noverify -jar " + service.getJarPath() + "\"");
                     }
                 }
             }
-            Thread.sleep(4000);
+//            Thread.sleep(4000);
             aliveServices.clear();
         }
     }

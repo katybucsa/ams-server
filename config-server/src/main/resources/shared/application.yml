@@ -1,9 +1,9 @@
 #This configuration file will hold common configs to be shared among all files
 spring:
-#  cloud:
-#    loadbalancer:
-#      ribbon:
-#        enabled: false
+  cloud:
+    loadbalancer:
+      ribbon:
+        enabled: false
   main:
     allow-bean-definition-overriding: true
 #  cloud:

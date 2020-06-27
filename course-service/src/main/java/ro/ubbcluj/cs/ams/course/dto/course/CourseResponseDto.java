@@ -8,7 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 @EqualsAndHashCode
-public class CourseDtoResponse {
+public class CourseResponseDto {
 
     private String id;
     private String name;

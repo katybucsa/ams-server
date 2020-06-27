@@ -22,7 +22,7 @@ eureka:
   client:
     register-with-eureka: true
     fetch-registry: true
-    registry-fetch-interval-seconds: 7
+    registry-fetch-interval-seconds: 5
     instance-info-replication-interval-seconds: 10
 
 auth:

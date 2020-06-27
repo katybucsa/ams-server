@@ -1,13 +1,14 @@
 package ro.ubbcluj.cs.ams.notification.service;
 
+import org.springframework.scheduling.annotation.Async;
 import ro.ubbcluj.cs.ams.notification.dto.SubscriptionDto;
 import ro.ubbcluj.cs.ams.notification.dto.SubscriptionEndpoint;
 import ro.ubbcluj.cs.ams.notification.dto.SubscriptionResponseDto;
-import ro.ubbcluj.cs.ams.notification.model.tables.UserNotif;
+import ro.ubbcluj.cs.ams.notification.dto.UserNotifs;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Notification;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Subscription;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.SubscriptionKeys;
-import ro.ubbcluj.cs.ams.notification.model.tables.records.SubscriptionRecord;
+import ro.ubbcluj.cs.ams.notification.model.tables.pojos.UserNotif;
 
 import java.util.List;
 
@@ -19,13 +20,22 @@ public interface Service {
 
     boolean existsSubscription(SubscriptionEndpoint subscriptionEndpoint);
 
-    Notification addNotification(Notification notification);
+    Notification addOrUpdateNotification(Notification notification);
 
     List<Subscription> findSubscriptionsByUserRole(String role);
+
+    List<Subscription> findUsersSubscriptions(List<String> users);
 
     SubscriptionKeys findSubscriptionKeysById(int id);
 
     List<Subscription> findSubscriptionsByUserId(String professorId);
 
-    List<UserNotif> findAllNotificationsForUser(String username);
+    UserNotifs findAllNotificationsForUser(String username);
+
+    @Async
+    void addUserNotification(String username, Integer notifId, Integer postId, String userRole);
+
+    UserNotif updateUserNotification(UserNotif userNotif);
+
+    int findNotSeenNotifications(String name);
 }

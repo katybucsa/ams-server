@@ -7,4 +7,9 @@ public interface NotificationRepo {
 
     NotificationRecord addNotification(Notification notification);
 
+    NotificationRecord findNotification(Integer postId, String type);
+
+    NotificationRecord updateNotification(Notification notification);
+
+    NotificationRecord findNotification(Integer notifId);
 }

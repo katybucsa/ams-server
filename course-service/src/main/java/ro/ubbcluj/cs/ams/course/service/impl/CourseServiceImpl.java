@@ -5,13 +5,19 @@ import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import ro.ubbcluj.cs.ams.course.controller.CourseController;
+import ro.ubbcluj.cs.ams.course.dto.ActivityTypes;
+import ro.ubbcluj.cs.ams.course.dto.StudentDetailsDto;
+import ro.ubbcluj.cs.ams.course.dto.course.CourseNameResponse;
 import ro.ubbcluj.cs.ams.course.dto.Mappers;
+import ro.ubbcluj.cs.ams.course.dto.course.CourseResponseDto;
+import ro.ubbcluj.cs.ams.course.dto.participation.ParticipantsResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.participation.ParticipationDetalis;
 import ro.ubbcluj.cs.ams.course.dto.course.CourseDtoRequest;
-import ro.ubbcluj.cs.ams.course.dto.course.CourseDtoResponse;
 import ro.ubbcluj.cs.ams.course.dto.course.CoursesDto;
 import ro.ubbcluj.cs.ams.course.dto.cplink.CpLinkResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.participation.ParticipationsResponseDto;
@@ -20,6 +26,7 @@ import ro.ubbcluj.cs.ams.course.dto.post.PostResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostsResponseDto;
 import ro.ubbcluj.cs.ams.course.model.tables.pojos.*;
 import ro.ubbcluj.cs.ams.course.model.tables.records.*;
+import ro.ubbcluj.cs.ams.course.repository.activityTypes.ActivityTypeRepo;
 import ro.ubbcluj.cs.ams.course.repository.courseCodeRepo.CourseCodeRepo;
 import ro.ubbcluj.cs.ams.course.repository.courseRepo.CourseRepo;
 import ro.ubbcluj.cs.ams.course.repository.cpLinkRepo.CpLinkRepo;
@@ -39,9 +46,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @org.springframework.stereotype.Service
@@ -68,6 +73,9 @@ public class CourseServiceImpl implements Service {
     private PostRepo postRepo;
 
     @Autowired
+    private ActivityTypeRepo activityTypeRepo;
+
+    @Autowired
     private ParticipationRepo participRepo;
 
     @Autowired
@@ -88,6 +96,10 @@ public class CourseServiceImpl implements Service {
     @Autowired
     private Provider<Instant> instant;
 
+    @Autowired
+    @Qualifier("WebClientBuilderBean")
+    private WebClient.Builder webClientBuilder;
+
     private String prefixCode = "ML";
 
     private DecimalFormat myFormat = new DecimalFormat("0000");
@@ -95,7 +107,7 @@ public class CourseServiceImpl implements Service {
 
     @Transactional
     @Override
-    public CourseDtoResponse addCourse(CourseDtoRequest courseRequestDto) {
+    public CourseResponseDto addCourse(CourseDtoRequest courseRequestDto) {
 
         LOGGER.info("========== LOGGING addCourse ==========");
 
@@ -109,7 +121,7 @@ public class CourseServiceImpl implements Service {
             throw new CourseServiceException("Course \"" + course.getName() + "\" already exists!!", CourseExceptionType.DUPLICATE_COURSE, HttpStatus.BAD_REQUEST);
 
         LOGGER.info("========== SUCCESSFUL LOGGING addCourse ==========");
-        return CourseDtoResponse.builder()
+        return CourseResponseDto.builder()
                 .id(savedCourse.getId())
                 .name(savedCourse.getName())
                 .credits(savedCourse.getCredits())
@@ -162,8 +174,10 @@ public class CourseServiceImpl implements Service {
             LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(
                     postRequestDto.getEvent().getDate()), ZoneId.systemDefault());
             Event event = new Event(postRecord.getId(), dateTime.toLocalDate(), dateTime.toLocalTime(), postRequestDto.getEvent().getPlace());
+            CourseRecord courseRecord = courseRepo.findById(postResponseDto.getCourseId());
             eventRepo.addEvent(event);
             postResponseDto.setEvent(event);
+            postResponseDto.setCourseName(courseRecord.getName());
         }
         jmsTemplate.convertAndSend(notificationQueue, objectMapper.writeValueAsString(postResponseDto));
 
@@ -197,7 +211,7 @@ public class CourseServiceImpl implements Service {
 
     @SneakyThrows
     @Override
-    public Participation addOrDeleteParticipation(Participation participation) {
+    public Participation addOrDeleteParticipation(Participation participation, String auth) {
 
         LOGGER.info("========== LOGGING addParticipation ==========");
 
@@ -210,7 +224,13 @@ public class CourseServiceImpl implements Service {
                     .stream()
                     .map(ParticipationRecord::getUserId)
                     .collect(Collectors.toList());
-//            title,courseId,professorId
+            Map<String, String> names = new HashMap<>();
+            participants.forEach(p -> {
+                if (!names.containsKey(p)) {
+                    String n = findUserNameByUserId(p, auth);
+                    names.put(p, n);
+                }
+            });
 
             ParticipationDetalis pDetails = ParticipationDetalis.builder()
                     .courseId(postRecord.getCourseId())
@@ -218,7 +238,7 @@ public class CourseServiceImpl implements Service {
                     .postId(postRecord.getId())
                     .postTitle(postRecord.getTitle())
                     .professorId(postRecord.getProfessorId())
-                    .participants(participants)
+                    .participants(new ArrayList<>(names.values()))
                     .build();
 
             jmsTemplate.convertAndSend(participQueue, objectMapper.writeValueAsString(pDetails));
@@ -244,6 +264,58 @@ public class CourseServiceImpl implements Service {
                 .build();
     }
 
+    @Override
+    public ActivityTypes findAllActivityTypes() {
+
+        LOGGER.info("========== LOGGING findAllActivityTypes ==========");
+
+        List<ActivityType> activityTypes = mappers.activityTypesRecordToActivityTypes(activityTypeRepo.findActivityTypes());
+
+        LOGGER.info("========== SUCCESSFULLY LOGGING findAllActivityTypes ==========");
+        return ActivityTypes.builder()
+                .data(activityTypes)
+                .build();
+    }
+
+    @Override
+    public CourseNameResponse findCourseById(String courseId) {
+
+        LOGGER.info("========== LOGGING findCourseById ==========");
+
+        CourseRecord courseRecord = courseRepo.findById(courseId);
+
+        LOGGER.info("========== SUCCESSFULLY LOGGING findCourseById ==========");
+        return mappers.courseRecordToCourseNameResponse(courseRecord);
+    }
+
+    @Override
+    public ActivityType findActivityTypeById(int typeId) {
+
+        LOGGER.info("========== LOGGING findActivityTypeById ==========");
+
+        ActivityType activityType = mappers.activityTypeRecordToActivityType(activityTypeRepo.findActivityTypeById(typeId));
+
+        LOGGER.info("========== SUCCESSFULLY LOGGING findActivityTypeById ==========");
+        return activityType;
+    }
+
+    @Override
+    public ParticipantsResponseDto findEventParticipants(Integer postId, String auth) {
+
+        LOGGER.info("========== LOGGING findEventParticipants ==========");
+
+        List<ParticipationRecord> participationRecords = participRepo.findAllByEventId(postId);
+        List<String> list = new ArrayList<>();
+        participationRecords.forEach(p -> {
+            list.add(findUserNameByUserId(p.getUserId(), auth));
+        });
+
+        LOGGER.info("========== SUCCESSFULLY LOGGING findEventParticipants ==========");
+        return ParticipantsResponseDto.builder()
+                .data(list)
+                .build();
+    }
+
     private String generateCourseCode(Course course) {
 
         SpecializationRecord specialization = specializationDao.findById(course.getSpecId());
@@ -264,6 +336,20 @@ public class CourseServiceImpl implements Service {
             code += scr.getCode();
         }
         return code;
+    }
+
+    private String findUserNameByUserId(String userId, String authorization) {
+
+
+        StudentDetailsDto studentDetailsDto = webClientBuilder
+                .build()
+                .get()
+                .uri("http://auth-service/auth/users?username=" + userId)
+                .header("Authorization", authorization)
+                .retrieve()
+                .bodyToMono(StudentDetailsDto.class)
+                .block();
+        return Objects.requireNonNull(studentDetailsDto).getFirstName() + " " + studentDetailsDto.getLastName();
     }
 
 }

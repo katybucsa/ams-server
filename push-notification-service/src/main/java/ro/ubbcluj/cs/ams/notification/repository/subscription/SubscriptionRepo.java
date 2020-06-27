@@ -16,4 +16,6 @@ public interface SubscriptionRepo {
     List<SubscriptionRecord> findSubscriptionsByUserRole(String userRole);
 
     List<SubscriptionRecord> findSubscriptionsByUserId(String professorId);
+
+    List<SubscriptionRecord> findUsersSubscriptions(List<String> users);
 }

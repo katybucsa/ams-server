@@ -14,13 +14,14 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
     @Override
     public void configure(HttpSecurity http) throws Exception {
 
-        http.csrf().disable()
+        http.cors().and()
+                .csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/login", "/oauth/**").permitAll()
+                .antMatchers("/login", "/refresh", "/oauth/**").permitAll()
                 .antMatchers(HttpMethod.POST, "/actuator/shutdown").hasAuthority("ADMIN")
                 .regexMatchers(HttpMethod.POST, "/health\\?.*$", "/present\\?.*$").permitAll()//.access("#oauth2.hasScope('health_mod')")
                 .antMatchers("/current").authenticated()
-                .antMatchers(HttpMethod.POST,"/*/actuator/shutdown").hasAuthority("ADMIN")
+                .antMatchers(HttpMethod.POST, "/*/actuator/shutdown").hasAuthority("ADMIN")
                 .anyRequest().authenticated();
     }
 }

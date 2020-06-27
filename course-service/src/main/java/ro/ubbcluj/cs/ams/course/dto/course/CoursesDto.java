@@ -13,5 +13,5 @@ import java.util.List;
 @Builder
 public class CoursesDto {
 
-    List<CourseDtoResponse> data;
+    List<CourseResponseDto> data;
 }

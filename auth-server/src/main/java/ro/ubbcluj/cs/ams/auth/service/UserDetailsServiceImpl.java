@@ -43,6 +43,15 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return userDetails;
     }
 
+    public User findUserByUsername(String name) throws UsernameNotFoundException {
+
+        Optional<User> optionalUser = userDetailsRepository.findByUsername(name);
+        optionalUser.orElseThrow(() -> new UsernameNotFoundException("Username or password incorrect!"));
+
+        return optionalUser.get();
+    }
+
+
 //    public Principal authenticateUser(UserDto userDto) {
 //
 //        logger.info("==========authenticateUser==========");

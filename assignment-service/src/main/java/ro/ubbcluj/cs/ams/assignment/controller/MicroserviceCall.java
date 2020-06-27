@@ -3,6 +3,7 @@ package ro.ubbcluj.cs.ams.assignment.controller;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cloud.netflix.ribbon.RibbonClient;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -10,6 +11,9 @@ import org.springframework.http.MediaType;
 //import org.springframework.retry.annotation.Backoff;
 //import org.springframework.retry.annotation.Recover;
 //import org.springframework.retry.annotation.Retryable;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -17,6 +21,8 @@ import ro.ubbcluj.cs.ams.assignment.dto.SpLinkBean;
 import ro.ubbcluj.cs.ams.assignment.service.exception.AssignmentServiceException;
 import ro.ubbcluj.cs.ams.assignment.service.exception.AssignmentServiceExceptionType;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.Objects;
 
 @Component
@@ -26,8 +32,8 @@ public class MicroserviceCall {
     @Autowired
     private WebClient.Builder webClientBuilder;
 
-//    @Autowired
-//    private RedisTemplate redisTemplate;
+    @Resource
+    private HttpServletRequest httpServletRequest;
 
     private final Logger logger = LogManager.getLogger(MicroserviceCall.class);
 
@@ -45,35 +51,36 @@ public class MicroserviceCall {
     }
 
     //        @SentinelResource(value = "linkVerification",  fallback = "linkVerificationFallback")
-//    @Retryable(maxAttempts = 3, backoff = @Backoff(delay = 3000))
+    @Retryable(value = {Throwable.class}, maxAttempts = 3, backoff = @Backoff(delay = 6000))
 //    @HystrixCommand(fallbackMethod = "linkVerificationFallback")
-//    @CachePut(value = "splinkCache", key = "{#subjectId,#activityTypeId,#professorUsername}")
-    public SpLinkBean checkIfProfessorTeachesSpecificActivityTypeForASubject(String subjectId, int activityTypeId, String professorUsername) {
+    @CachePut(value = "splinkCache", key = "{#courseId,#activityTypeId,#professorUsername}")
+    public SpLinkBean checkIfProfessorTeachesSpecificActivityTypeForASubject(String courseId, int activityTypeId, String professorUsername) {
 
-        logger.info("Logging check if a professor teaches specific activity type for a subject");
-        logger.info("Call ro.ubbcluj.cs.ams.course microservice");
+        logger.info("Logging check if a professor teaches specific activity type for a course");
+        logger.info("Call course microservice");
         SpLinkBean response = null;
-        try {
-            String path = "http://course-service/course/assign?subjectId=" + subjectId + "&activityTypeId=" + activityTypeId + "&professorUsername=" + professorUsername;
-            response = webClientBuilder
-                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .build()
-                    .get()
-                    .uri(path)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .retrieve()
-                    .bodyToMono(SpLinkBean.class)
-                    .block();
-            if (Objects.isNull(response)) {
-                throw new AssignmentServiceException("There is no professor with username " + professorUsername + " that teaches activity type with id " + activityTypeId + " for subject with id " + subjectId + "!\n",
-                        AssignmentServiceExceptionType.TEACHER_ACTIVITY_TYPE_NOT_FOUND, HttpStatus.NOT_FOUND);
-            }
-        } catch (WebClientResponseException e) {
-            logger.error("checkIfProfessorTeachesSpecificActivityTypeForASubject: call to subject microservice failed");
-            handleWebClientResponseException(e,
-                    "There is no teacher with username " + professorUsername + " that teaches activity type with id " + activityTypeId + " for subject with id " + subjectId + "!\n",
-                    AssignmentServiceExceptionType.TEACHER_ACTIVITY_TYPE_NOT_FOUND);
+//        try {
+        String path = "http://course-service/course/assign?courseId=" + courseId + "&activityTypeId=" + activityTypeId + "&professorUsername=" + professorUsername;
+        response = webClientBuilder
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build()
+                .get()
+                .uri(path)
+                .header("Authorization", httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION))
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(SpLinkBean.class)
+                .block();
+        if (Objects.isNull(response)) {
+            throw new AssignmentServiceException("There is no professor with username " + professorUsername + " that teaches activity type with id " + activityTypeId + " for subject with id " + courseId + "!\n",
+                    AssignmentServiceExceptionType.TEACHER_ACTIVITY_TYPE_NOT_FOUND, HttpStatus.NOT_FOUND);
         }
+//        } catch (WebClientResponseException e) {
+//            logger.error("checkIfProfessorTeachesSpecificActivityTypeForASubject: call to subject microservice failed");
+//            handleWebClientResponseException(e,
+//                    "There is no teacher with username " + professorUsername + " that teaches activity type with id " + activityTypeId + " for subject with id " + subjectId + "!\n",
+//                    AssignmentServiceExceptionType.TEACHER_ACTIVITY_TYPE_NOT_FOUND);
+//        }
         return response;
     }
 
@@ -94,11 +101,11 @@ public class MicroserviceCall {
 //        return true;
 //    }
 
-//    @Recover
-//    public boolean recovern(Throwable t) {
-//        logger.info("Bar.recover");
-//        return false;
-//    }
+    @Recover
+    public boolean recover(Throwable t) {
+        logger.info("Bar.recover");
+        throw new AssignmentServiceException("Could not assign grade!", AssignmentServiceExceptionType.ERROR, HttpStatus.SERVICE_UNAVAILABLE);
+    }
 
 
 //    @PostConstruct

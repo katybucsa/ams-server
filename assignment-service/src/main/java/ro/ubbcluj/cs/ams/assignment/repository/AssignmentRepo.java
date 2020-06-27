@@ -9,5 +9,5 @@ public interface AssignmentRepo {
 
     GradeRecord addGrade(Grade grade);
 
-    List<GradeRecord> getAllGradesByStudentAndSubjectId(String studentUsername, String subjectId);
+    List<GradeRecord> getAllGradesByStudentAndCourseId(String studentUsername, String subjectId);
 }

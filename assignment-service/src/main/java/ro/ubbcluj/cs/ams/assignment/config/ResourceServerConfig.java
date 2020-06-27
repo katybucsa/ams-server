@@ -18,7 +18,7 @@ public class ResourceServerConfig  extends ResourceServerConfigurerAdapter {
                 .authorizeRequests()
                 .regexMatchers(HttpMethod.POST, "/health\\?.*$", "/present\\?.*$").permitAll()//.access("#oauth2.hasScope('health_mod')")
                 .antMatchers(HttpMethod.POST, "/grades").hasAuthority("PROFESSOR")
-                .antMatchers(HttpMethod.GET, "/grades").hasAuthority("STUDENT")
+                .regexMatchers(HttpMethod.GET, "/grades\\?.*$").hasAuthority("STUDENT")
                 .antMatchers(HttpMethod.POST,"/actuator/shutdown").hasAuthority("ADMIN")
                 .antMatchers(HttpMethod.GET, "/running").hasAuthority("ADMIN")
                 .anyRequest().authenticated();
