@@ -117,20 +117,20 @@ public class BeansConfig {
     }
 
 
-    private static List<Queue> QUEUES = Arrays.asList(
-            assignmentHQueue(),
-//            attendanceHQueue(),
-            authHQueue(),
-            courseHQueue(),
-            gatewayHQueue(),
-            notificationHQueue(),
-            studentHQueue()
-    );
-
-    public static List<Queue> queues() {
-
-        return QUEUES;
-    }
+//    private static List<Queue> QUEUES = Arrays.asList(
+//            assignmentHQueue(),
+////            attendanceHQueue(),
+//            authHQueue(),
+//            courseHQueue(),
+//            gatewayHQueue(),
+//            notificationHQueue(),
+//            studentHQueue()
+//    );
+//
+//    public static List<Queue> queues() {
+//
+//        return QUEUES;
+//    }
 
 //    public List<Queue> queues() {
 //

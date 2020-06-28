@@ -75,13 +75,6 @@ public class SendNotificationHandler {
         enrolledStudents.forEach(student->{
             service.addUserNotification(student,savedNotification.getId(),savedNotification.getPostId(),"STUDENT");
         });
-//        service.addUserNotification(
-//                subscription.getUsername(),
-//                ((Notification) message).getId(),
-//                ((Notification) message).getPostId(),
-//                subscription.getUserRole());
-//        sentUsers.add(subscription.getUsername());
-//        }
         sendPushMessageToAllSubscribers(subscriptions, savedNotification);
     }
 
@@ -93,8 +86,8 @@ public class SendNotificationHandler {
         String body;
         if (participationDetalis.getParticipants().size() > 2) {
             body = participationDetalis.getParticipants().get(0) +
-                    "," + participationDetalis.getParticipants().get(1) +
-                    "another " + (participationDetalis.getParticipants().size() - 2) + "participate to " +
+                    ", " + participationDetalis.getParticipants().get(1) +
+                    " another " + (participationDetalis.getParticipants().size() - 2) + " participate to " +
                     participationDetalis.getPostTitle();
         } else {
             if (participationDetalis.getParticipants().size() == 1) {
@@ -103,8 +96,8 @@ public class SendNotificationHandler {
                         participationDetalis.getPostTitle();
             } else {
                 body = participationDetalis.getParticipants().get(0) +
-                        "," + participationDetalis.getParticipants().get(1) +
-                        "participate to " +
+                        ", " + participationDetalis.getParticipants().get(1) +
+                        " participate to " +
                         participationDetalis.getPostTitle();
             }
         }

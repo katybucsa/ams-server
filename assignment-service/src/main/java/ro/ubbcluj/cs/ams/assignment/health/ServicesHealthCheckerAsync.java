@@ -10,8 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.annotation.Condition;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.jms.annotation.EnableJms;
@@ -24,13 +22,9 @@ import ro.ubbcluj.cs.ams.utils.config.EurekaServicesProperties;
 import ro.ubbcluj.cs.ams.utils.config.TargetJarsProperties;
 import ro.ubbcluj.cs.ams.utils.health.MicroserviceDetails;
 
-import javax.jms.JMSException;
-import javax.jms.Queue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static ro.ubbcluj.cs.ams.utils.config.BeansConfig.queues;
 
 @Configuration
 @EnableScheduling
@@ -53,15 +47,10 @@ public class ServicesHealthCheckerAsync {
     private String thisAppName;
 
     @Autowired
-    private Queue adminQueue;
-
-    @Autowired
     private JmsTemplate jmsTemplate;
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    private final List<Queue> QUEUES = new ArrayList<>(queues());
 
     public static final List<MicroserviceDetails> services = new ArrayList<>();
     private final List<String> aliveServices = new ArrayList<>();
@@ -74,7 +63,7 @@ public class ServicesHealthCheckerAsync {
     @EventListener(ApplicationReadyEvent.class)
     public void afterStartup() {
 
-        jmsTemplate.convertAndSend(adminQueue, objectMapper.writeValueAsString(ServiceState.builder()
+        jmsTemplate.convertAndSend("admin-queue", objectMapper.writeValueAsString(ServiceState.builder()
                 .service(thisAppName.split("[-]")[0])
                 .state("running")
                 .build()));
@@ -91,26 +80,17 @@ public class ServicesHealthCheckerAsync {
             jmsTemplate.receive(thisAppName.replace("service", "rqueue"));
 
             allStarted = true;
-            QUEUES.removeIf(q -> {
-                try {
-                    return q.getQueueName().split("[-]")[0].equals(thisAppName.split("[-]")[0]);
-                } catch (JMSException e) {
-                    e.printStackTrace();
-                }
-                return false;
-            });
             addAllRegisteredServices();
         }
         if (allStarted) {
 
             LOGGER.info("========== all microservices running ==========");
             sentServices.clear();
-            for (Queue queue : QUEUES) {
-                String serviceName = queue.getQueueName().replace("hqueue", "service");
-                MicroserviceDetails service = services.stream().filter(s -> s.getName().equals(serviceName)).findAny().get();
+            for (MicroserviceDetails service : services) {
+                String serviceQueue = service.getName().replace("service", "hqueue");
                 if (!detectedServices.contains(service) ||
                         (detectedServices.contains(service) && service.isCalledMe())) {
-                    jmsTemplate.convertAndSend(queue, thisAppName);
+                    jmsTemplate.convertAndSend(serviceQueue, thisAppName);
                     sentServices.add(service);
                     System.out.println(service.getName());
                 }
@@ -135,7 +115,7 @@ public class ServicesHealthCheckerAsync {
             System.out.println(sentServices.size());
             for (MicroserviceDetails service : sentServices) {
                 if (!aliveServices.contains(service.getName())) {
-                    service.setTimesNoRun(2);
+                    service.setTimesNoRun(3);
                     service.setCalledMe(false);
                     detectedServices.add(service);
                     if (iAmTheLeader()) {
@@ -168,7 +148,7 @@ public class ServicesHealthCheckerAsync {
         applications.getRegisteredApplications().forEach(registeredApplication -> {
             registeredApplication.getInstances().forEach(instance -> {
                 String serviceName = instance.getInstanceId().split("[:]")[1];
-                if (!serviceName.equals(thisAppName)) {
+                if (!serviceName.equals(thisAppName) && !serviceName.equals("gateway-service")) {
                     services.add(new MicroserviceDetails(serviceName, thisAppName, jarsProps));
                 }
             });
