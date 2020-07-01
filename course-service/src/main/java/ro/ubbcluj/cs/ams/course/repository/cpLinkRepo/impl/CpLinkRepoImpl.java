@@ -5,11 +5,12 @@ import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import ro.ubbcluj.cs.ams.course.model.Tables;
 import ro.ubbcluj.cs.ams.course.model.tables.records.CpLinkRecord;
 import ro.ubbcluj.cs.ams.course.repository.cpLinkRepo.CpLinkRepo;
 
 import java.util.List;
+
+import static ro.ubbcluj.cs.ams.course.model.tables.CpLink.CP_LINK;
 
 @Repository
 public class CpLinkRepoImpl implements CpLinkRepo {
@@ -24,13 +25,13 @@ public class CpLinkRepoImpl implements CpLinkRepo {
 
         LOGGER.info("========== LOGGING findCpLink ==========");
 
-        CpLinkRecord cpLinkRecord = dsl.selectFrom(Tables.CP_LINK)
-                .where(Tables.CP_LINK.COURSE_ID.eq(courseId))
-                .and(Tables.CP_LINK.TYPE_ID.eq(typeId))
-                .and(Tables.CP_LINK.USER_ID.eq(professor))
+        CpLinkRecord cpLinkRecord = dsl.selectFrom(CP_LINK)
+                .where(CP_LINK.COURSE_ID.eq(courseId))
+                .and(CP_LINK.TYPE_ID.eq(typeId))
+                .and(CP_LINK.USER_ID.eq(professor))
                 .fetchOne();
 
-        LOGGER.info("========== SUCCESSFUL LOGGING findCpLink ==========");
+        LOGGER.info("========== SUCCESSFULLY LOGGING findCpLink ==========");
         return cpLinkRecord;
     }
 
@@ -39,11 +40,11 @@ public class CpLinkRepoImpl implements CpLinkRepo {
 
         LOGGER.info("========== LOGGING findAllLinksByProfessorUsername ==========");
 
-        List<CpLinkRecord> cpLinks = dsl.selectFrom(Tables.CP_LINK)
-                .where(Tables.CP_LINK.USER_ID.eq(professorUsername))
+        List<CpLinkRecord> cpLinks = dsl.selectFrom(CP_LINK)
+                .where(CP_LINK.USER_ID.eq(professorUsername))
                 .fetch();
 
-        LOGGER.info("========== SUCCESSFUL LOGGING findAllLinksByProfessorUsername ==========");
+        LOGGER.info("========== SUCCESSFULLY LOGGING findAllLinksByProfessorUsername ==========");
         return cpLinks;
     }
 }

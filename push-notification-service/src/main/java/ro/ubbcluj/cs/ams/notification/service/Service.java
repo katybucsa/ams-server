@@ -1,10 +1,10 @@
 package ro.ubbcluj.cs.ams.notification.service;
 
 import org.springframework.scheduling.annotation.Async;
-import ro.ubbcluj.cs.ams.notification.dto.SubscriptionDto;
-import ro.ubbcluj.cs.ams.notification.dto.SubscriptionEndpoint;
-import ro.ubbcluj.cs.ams.notification.dto.SubscriptionResponseDto;
-import ro.ubbcluj.cs.ams.notification.dto.UserNotifs;
+import ro.ubbcluj.cs.ams.notification.dto.notification.UserNotifs;
+import ro.ubbcluj.cs.ams.notification.dto.subscription.SubscriptionDto;
+import ro.ubbcluj.cs.ams.notification.dto.subscription.SubscriptionEndpoint;
+import ro.ubbcluj.cs.ams.notification.dto.subscription.SubscriptionResponseDto;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Notification;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Subscription;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.SubscriptionKeys;

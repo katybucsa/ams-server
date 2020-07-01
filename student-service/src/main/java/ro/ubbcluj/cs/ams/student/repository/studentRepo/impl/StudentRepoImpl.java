@@ -21,7 +21,7 @@ public class StudentRepoImpl implements StudentRepo {
     @Autowired
     private DSLContext dsl;
 
-    private final Logger LOGGER = LoggerFactory.getLogger(StudentRepoImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StudentRepoImpl.class);
 
     @Override
     public List<StudentRecord> findAllStudentsByGroupId(Integer groupId, List<EnrollmentRecord> enrollments) {

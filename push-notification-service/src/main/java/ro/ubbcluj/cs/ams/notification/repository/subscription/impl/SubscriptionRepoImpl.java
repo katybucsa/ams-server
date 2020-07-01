@@ -27,7 +27,7 @@ public class SubscriptionRepoImpl implements SubscriptionRepo {
 
         LOGGER.info("========== LOGGING addSubscription ==========");
 
-        SubscriptionRecord subscriptionRecord = dsl.insertInto(Tables.SUBSCRIPTION, Tables.SUBSCRIPTION.USERNAME, Tables.SUBSCRIPTION.USER_ROLE, Tables.SUBSCRIPTION.ENDPOINT, Tables.SUBSCRIPTION.SUBS_ID)
+        SubscriptionRecord subscriptionRecord = dsl.insertInto(SUBSCRIPTION, SUBSCRIPTION.USERNAME, SUBSCRIPTION.USER_ROLE, SUBSCRIPTION.ENDPOINT, SUBSCRIPTION.SUBS_ID)
                 .values(subscription.getUsername(), subscription.getUserRole(), subscription.getEndpoint(), subscription.getSubsId())
                 .returning()
                 .fetchOne();
@@ -41,8 +41,8 @@ public class SubscriptionRepoImpl implements SubscriptionRepo {
 
         LOGGER.info("========== LOGGING deleteSubscription ==========");
 
-        SubscriptionRecord subscriptionRecord = dsl.deleteFrom(Tables.SUBSCRIPTION)
-                .where(Tables.SUBSCRIPTION.ENDPOINT.eq(subscriptionEndpoint))
+        SubscriptionRecord subscriptionRecord = dsl.deleteFrom(SUBSCRIPTION)
+                .where(SUBSCRIPTION.ENDPOINT.eq(subscriptionEndpoint))
                 .returning()
                 .fetchOne();
 
@@ -55,8 +55,8 @@ public class SubscriptionRepoImpl implements SubscriptionRepo {
 
         LOGGER.info("========== LOGGING findSubscription ==========");
 
-        SubscriptionRecord subscriptionRecord = dsl.selectFrom(Tables.SUBSCRIPTION)
-                .where(Tables.SUBSCRIPTION.ENDPOINT.eq(subscriptionEndpoint))
+        SubscriptionRecord subscriptionRecord = dsl.selectFrom(SUBSCRIPTION)
+                .where(SUBSCRIPTION.ENDPOINT.eq(subscriptionEndpoint))
                 .fetchAny();
 
         LOGGER.info("========== SUCCESSFULLY LOGGING findSubscription ==========");
@@ -68,8 +68,8 @@ public class SubscriptionRepoImpl implements SubscriptionRepo {
 
         LOGGER.info("========== LOGGING findSubscription ==========");
 
-        List<SubscriptionRecord> subscriptionRecords = dsl.selectFrom(Tables.SUBSCRIPTION)
-                .where(Tables.SUBSCRIPTION.USER_ROLE.eq(userRole))
+        List<SubscriptionRecord> subscriptionRecords = dsl.selectFrom(SUBSCRIPTION)
+                .where(SUBSCRIPTION.USER_ROLE.eq(userRole))
                 .fetch();
 
         LOGGER.info("========== SUCCESSFULLY LOGGING findSubscription ==========");

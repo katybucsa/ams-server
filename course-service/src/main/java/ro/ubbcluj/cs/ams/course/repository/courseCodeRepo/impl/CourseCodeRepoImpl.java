@@ -6,14 +6,14 @@ import org.jooq.DSLContext;
 import org.jooq.Record1;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ro.ubbcluj.cs.ams.course.model.Tables;
 import ro.ubbcluj.cs.ams.course.model.tables.pojos.CourseCode;
 import ro.ubbcluj.cs.ams.course.model.tables.records.CourseCodeRecord;
 import ro.ubbcluj.cs.ams.course.repository.courseCodeRepo.CourseCodeRepo;
-import ro.ubbcluj.cs.ams.course.repository.courseRepo.impl.CourseRepoImpl;
+
+import static ro.ubbcluj.cs.ams.course.model.tables.CourseCode.COURSE_CODE;
 
 @Component
-public class CourseCodeRepoImpl  implements CourseCodeRepo {
+public class CourseCodeRepoImpl implements CourseCodeRepo {
 
     @Autowired
     private DSLContext dsl;
@@ -23,24 +23,27 @@ public class CourseCodeRepoImpl  implements CourseCodeRepo {
     @Override
     public CourseCodeRecord findByCourseName(String name) {
 
-        LOGGER.info("++++++++ LOGGING findBySubjectName ++++++++");
+        LOGGER.info("========== LOGGING findBySubjectName ==========");
 
-        CourseCodeRecord subjectCodeRecord = dsl.selectFrom(Tables.COURSE_CODE)
-                .where(Tables.COURSE_CODE.COURSE_NAME.eq(name))
+        CourseCodeRecord courseCodeRecord = dsl.selectFrom(COURSE_CODE)
+                .where(COURSE_CODE.COURSE_NAME.eq(name))
                 .fetchOne();
-        return subjectCodeRecord;
+
+        LOGGER.info("========== SUCCESSFULLY LOGGING findByCourseName ==========");
+        return courseCodeRecord;
     }
 
     @Override
     public Integer addCourseCode(CourseCode courseCode) {
 
-        LOGGER.info("++++++++++ LOGGING addSubjectCode ++++++++++");
+        LOGGER.info("========== LOGGING addCourseCode ==========");
 
-        Record1<Integer> code = dsl.insertInto(Tables.COURSE_CODE, Tables.COURSE_CODE.COURSE_NAME)
+        Record1<Integer> code = dsl.insertInto(COURSE_CODE, COURSE_CODE.COURSE_NAME)
                 .values(courseCode.getCourseName())
-                .returningResult(Tables.COURSE_CODE.CODE)
+                .returningResult(COURSE_CODE.CODE)
                 .fetchOne();
 
+        LOGGER.info("========== SUCCESSFULLY LOGGING addCourseCode ==========");
         return code.value1();
     }
 }

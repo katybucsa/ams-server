@@ -5,12 +5,13 @@ import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import ro.ubbcluj.cs.ams.assignment.model.Tables;
 import ro.ubbcluj.cs.ams.assignment.model.tables.pojos.Grade;
 import ro.ubbcluj.cs.ams.assignment.model.tables.records.GradeRecord;
 import ro.ubbcluj.cs.ams.assignment.repository.AssignmentRepo;
 
 import java.util.List;
+
+import static ro.ubbcluj.cs.ams.assignment.model.tables.Grade.GRADE;
 
 @Repository
 public class AssignmentRepoImpl implements AssignmentRepo {
@@ -18,34 +19,35 @@ public class AssignmentRepoImpl implements AssignmentRepo {
     @Autowired
     private DSLContext dsl;
 
-    private final Logger logger = LogManager.getLogger(AssignmentRepoImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(AssignmentRepoImpl.class);
 
     @Override
     public GradeRecord addGrade(Grade grade) {
 
-        logger.info("========== Before addGrade ==========");
-        logger.info("Grade {}", grade);
+        LOGGER.info("========== LOGGING addGrade ==========");
+        LOGGER.info("Grade {}", grade);
 
-        GradeRecord gradeRecord = dsl.insertInto(Tables.GRADE, Tables.GRADE.TYPE_ID, Tables.GRADE.TEACHER, Tables.GRADE.STUDENT, Tables.GRADE.VALUE, Tables.GRADE.COURSE_ID, Tables.GRADE.DATE)
+        GradeRecord gradeRecord = dsl.insertInto(GRADE, GRADE.TYPE_ID, GRADE.TEACHER, GRADE.STUDENT, GRADE.VALUE, GRADE.COURSE_ID, GRADE.DATE)
                 .values(grade.getTypeId(), grade.getTeacher(), grade.getStudent(), grade.getValue(), grade.getCourseId(), grade.getDate())
                 .returning()
                 .fetchOne();
-        logger.info("========== addGrade successful ==========");
+
+        LOGGER.info("========== SUCCESSFULLY addGrade ==========");
         return gradeRecord;
     }
 
     @Override
     public List<GradeRecord> getAllGradesByStudentAndCourseId(String studentUsername, String courseId) {
 
-        logger.info("========== LOGGING getAllGradesByStudentAndCourseId ==========");
-        logger.info("Student username: {}, course id: {}", studentUsername, courseId);
+        LOGGER.info("========== LOGGING getAllGradesByStudentAndCourseId ==========");
+        LOGGER.info("Student username: {}, course id: {}", studentUsername, courseId);
 
-        List<GradeRecord> gradeRecordList = dsl.selectFrom(Tables.GRADE)
-                .where(Tables.GRADE.STUDENT.eq(studentUsername))
-                .and(Tables.GRADE.COURSE_ID.eq(courseId))
+        List<GradeRecord> gradeRecordList = dsl.selectFrom(GRADE)
+                .where(GRADE.STUDENT.eq(studentUsername))
+                .and(GRADE.COURSE_ID.eq(courseId))
                 .fetch();
 
-        logger.info("========== SUCCESSFUL LOGGING getAllGradesByStudentAndCourseId ==========");
+        LOGGER.info("========== SUCCESSFULLY LOGGING getAllGradesByStudentAndCourseId ==========");
         return gradeRecordList;
     }
 }

@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import ro.ubbcluj.cs.ams.course.model.tables.records.ActivityTypeRecord;
 import ro.ubbcluj.cs.ams.course.repository.activityTypes.ActivityTypeRepo;
-import ro.ubbcluj.cs.ams.course.repository.event.impl.EventRepoImpl;
 
 import java.util.List;
 
@@ -20,7 +19,6 @@ public class ActivityTypeRepoImpl implements ActivityTypeRepo {
     private DSLContext dsl;
 
     private static final Logger LOGGER = LogManager.getLogger(ActivityTypeRepoImpl.class);
-
 
     @Override
     public List<ActivityTypeRecord> findActivityTypes() {
@@ -39,7 +37,7 @@ public class ActivityTypeRepoImpl implements ActivityTypeRepo {
 
         LOGGER.info("========== LOGGING findActivityTypeById ==========");
 
-        ActivityTypeRecord activityTypeRecord=dsl.selectFrom(ACTIVITY_TYPE)
+        ActivityTypeRecord activityTypeRecord = dsl.selectFrom(ACTIVITY_TYPE)
                 .where(ACTIVITY_TYPE.TYPE_ID.eq(typeId))
                 .fetchAny();
 

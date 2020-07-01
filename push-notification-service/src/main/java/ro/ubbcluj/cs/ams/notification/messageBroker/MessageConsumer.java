@@ -8,8 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.stereotype.Component;
-import ro.ubbcluj.cs.ams.notification.dto.ParticipationDetalis;
-import ro.ubbcluj.cs.ams.notification.dto.PostResponseDto;
+import ro.ubbcluj.cs.ams.notification.dto.participation.ParticipationDetalis;
+import ro.ubbcluj.cs.ams.notification.dto.participation.PostResponseDto;
 import ro.ubbcluj.cs.ams.notification.notificator.SendNotificationHandler;
 import ro.ubbcluj.cs.ams.utils.common.ServiceState;
 

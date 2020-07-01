@@ -115,17 +115,17 @@ public class ServicesHealthCheckerAsync {
             System.out.println(sentServices.size());
             for (MicroserviceDetails service : sentServices) {
                 if (!aliveServices.contains(service.getName())) {
+                    LOGGER.info("========== Service {} is down from {}", service.getName(),thisAppName);
                     service.setTimesNoRun(3);
                     service.setCalledMe(false);
                     detectedServices.add(service);
                     if (iAmTheLeader()) {
-                        LOGGER.info("========== I am the leader - {}", thisAppName);
+                        LOGGER.info("========== I am the leader - {} ==========", thisAppName);
 
                         Runtime.getRuntime().exec("cmd /c start /min cmd.exe /K \"java -Xverify:none -noverify -jar " + service.getJarPath() + "\"");
                     }
                 }
             }
-//            Thread.sleep(4000);
             aliveServices.clear();
         }
     }

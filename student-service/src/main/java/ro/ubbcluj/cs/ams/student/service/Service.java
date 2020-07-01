@@ -1,8 +1,8 @@
 package ro.ubbcluj.cs.ams.student.service;
 
-import ro.ubbcluj.cs.ams.student.dto.CoursesIdsDto;
-import ro.ubbcluj.cs.ams.student.dto.SGroups;
-import ro.ubbcluj.cs.ams.student.dto.StudentsDto;
+import ro.ubbcluj.cs.ams.student.dto.group.SGroups;
+import ro.ubbcluj.cs.ams.student.dto.student.CoursesIdsDto;
+import ro.ubbcluj.cs.ams.student.dto.student.StudentsDto;
 import ro.ubbcluj.cs.ams.student.model.tables.pojos.SGroup;
 
 import java.util.List;

@@ -78,7 +78,6 @@ public class AttendanceService implements Service {
         Attendance attendance = new Attendance(Integer.valueOf("0"), username, createdAt, attendanceRequest.getAttendanceInfoId());
         AttendanceRecord attendanceAdded = attendanceDao.addAttendance(attendance);
 
-        //TODO: call-uri catre microserviciile pentru ro.ubbcluj.cs.ams.course si activity
 
         AttendanceResponse attendanceResponse = AttendanceResponse.builder()
                 .course(attendanceInfoRecord.getCourseId())

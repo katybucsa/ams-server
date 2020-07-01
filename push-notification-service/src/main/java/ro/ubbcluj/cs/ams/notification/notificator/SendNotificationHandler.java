@@ -6,14 +6,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpStatus;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import ro.ubbcluj.cs.ams.notification.dto.*;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import ro.ubbcluj.cs.ams.notification.dto.participation.AdminNotif;
+import ro.ubbcluj.cs.ams.notification.dto.participation.EnrolledStudents;
+import ro.ubbcluj.cs.ams.notification.dto.participation.ParticipationDetalis;
+import ro.ubbcluj.cs.ams.notification.dto.participation.PostResponseDto;
+import ro.ubbcluj.cs.ams.notification.dto.subscription.SubscriptionEndpoint;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Notification;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Subscription;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.SubscriptionKeys;
-import ro.ubbcluj.cs.ams.notification.service.CryptoService;
+import ro.ubbcluj.cs.ams.notification.service.exception.NotificationExceptionType;
+import ro.ubbcluj.cs.ams.notification.service.exception.NotificationServiceException;
+import ro.ubbcluj.cs.ams.notification.service.impl.CryptoService;
 import ro.ubbcluj.cs.ams.notification.service.Service;
 import ro.ubbcluj.cs.ams.utils.common.ServiceState;
 
@@ -70,8 +82,6 @@ public class SendNotificationHandler {
             subscriptions = new ArrayList<>();
         } else
             subscriptions = service.findUsersSubscriptions(enrolledStudents);
-        //        if (!sentUsers.contains(subscription.getUsername()) && !subscription.getUserRole().equals("ADMIN")) {
-
         enrolledStudents.forEach(student->{
             service.addUserNotification(student,savedNotification.getId(),savedNotification.getPostId(),"STUDENT");
         });
@@ -167,7 +177,9 @@ public class SendNotificationHandler {
         }
     }
 
-    private List<String> findAllEnrolledStudents(String courseId) {
+    @Retryable(value = {WebClientResponseException.class}, maxAttempts = 3, backoff = @Backoff(delay = 6000))
+    @Cacheable(value = "enrolledStudents", key = "#courseId")
+    public List<String> findAllEnrolledStudents(String courseId) {
 
         return Objects.requireNonNull(webClientBuilder
                 .build()
@@ -177,5 +189,12 @@ public class SendNotificationHandler {
                 .bodyToMono(EnrolledStudents.class)
                 .block())
                 .getData();
+    }
+
+    @Recover
+    public List<String> recover(WebClientResponseException t) {
+
+        LOGGER.info("Recover");
+        throw new NotificationServiceException("Could not get enrolled students!", NotificationExceptionType.ERROR, HttpStatus.SERVICE_UNAVAILABLE);
     }
 }

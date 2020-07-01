@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Configuration;
 public class TargetJarsProperties {
 
     public String assignment_service;
-    public String attendance_service;
     public String auth_service;
     public String course_service;
     public String gateway_service;

@@ -6,7 +6,6 @@ java:
   jar:
     target:
       assignment-service: ./assignment-service/target/assignment-service-1.0-SNAPSHOT.jar
-#      attendance-service: ./attendance-server/target/attendance-server-1.0-SNAPSHOT.jar
       auth-service: ./auth-server/target/auth-server-1.0-SNAPSHOT.jar
       course-service: ./course-service/target/course-service-1.0-SNAPSHOT.jar
       gateway-service: ./gateway-service/target/gateway-service-1.0-SNAPSHOT.jar

@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import ro.ubbcluj.cs.ams.course.model.tables.pojos.Participation;
 import ro.ubbcluj.cs.ams.course.model.tables.records.ParticipationRecord;
-import ro.ubbcluj.cs.ams.course.repository.cpLinkRepo.impl.CpLinkRepoImpl;
 import ro.ubbcluj.cs.ams.course.repository.participationRepo.ParticipationRepo;
 
 import java.util.List;
@@ -25,7 +24,7 @@ public class ParticipationRepoImpl implements ParticipationRepo {
     @Override
     public int addOrDeleteParticipation(Participation participation) {
 
-        LOGGER.info("========== LOGGING addParticipation ==========");
+        LOGGER.info("========== LOGGING addOrDeleteParticipation ==========");
 
         int inserted = 0;
         int deleted = dsl.deleteFrom(PARTICIPATION)
@@ -34,12 +33,16 @@ public class ParticipationRepoImpl implements ParticipationRepo {
                 .execute();
 
         if (deleted == 0) {
+
+            LOGGER.info("========== add participation ==========");
             inserted = dsl.insertInto(PARTICIPATION, PARTICIPATION.EVENT_ID, PARTICIPATION.USER_ID)
                     .values(participation.getEventId(), participation.getUserId())
                     .execute();
+        } else {
+            LOGGER.info("========== delete participation ==========");
         }
 
-        LOGGER.info("========== SUCCESSFULLY LOGGING addParticipation ==========");
+        LOGGER.info("========== SUCCESSFULLY LOGGING addOrDeleteParticipation ==========");
         return inserted;
     }
 

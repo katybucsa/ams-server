@@ -6,11 +6,6 @@ spring:
         enabled: false
   main:
     allow-bean-definition-overriding: true
-#  cloud:
-#    sentinel:
-#      eager: true
-#      transport:
-#        dashboard: localhost:8099
   activemq:
     broker-url: tcp://localhost:61616
     user: admin

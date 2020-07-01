@@ -18,7 +18,7 @@ public class GroupRepoImpl implements GroupRepo {
     @Autowired
     private DSLContext dsl;
 
-    private final Logger LOGGER = LoggerFactory.getLogger(GroupRepoImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GroupRepoImpl.class);
 
     @Override
     public List<SGroupRecord> findAllGroupsBySpecId(int specId) {

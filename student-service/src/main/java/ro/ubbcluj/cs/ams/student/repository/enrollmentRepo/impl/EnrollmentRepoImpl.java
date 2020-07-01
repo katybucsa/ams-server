@@ -19,7 +19,7 @@ public class EnrollmentRepoImpl implements EnrollmentRepo {
     @Autowired
     private DSLContext dsl;
 
-    private final Logger LOGGER = LoggerFactory.getLogger(EnrollmentRepoImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EnrollmentRepoImpl.class);
 
     @Override
     public List<EnrollmentRecord> findAllStudentEnrollments(String studentId) {

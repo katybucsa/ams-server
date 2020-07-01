@@ -1,24 +1,24 @@
 package ro.ubbcluj.cs.ams.course.service;
 
-import ro.ubbcluj.cs.ams.course.dto.ActivityTypes;
+import ro.ubbcluj.cs.ams.course.dto.activityType.ActivityTypes;
 import ro.ubbcluj.cs.ams.course.dto.course.CourseNameResponse;
 import ro.ubbcluj.cs.ams.course.dto.course.CourseDtoRequest;
 import ro.ubbcluj.cs.ams.course.dto.course.CourseResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.course.CoursesDto;
-import ro.ubbcluj.cs.ams.course.dto.cplink.CpLinkResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.participation.ParticipantsResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.participation.ParticipationsResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostRequestDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostsResponseDto;
 import ro.ubbcluj.cs.ams.course.model.tables.pojos.ActivityType;
+import ro.ubbcluj.cs.ams.course.model.tables.pojos.CpLink;
 import ro.ubbcluj.cs.ams.course.model.tables.pojos.Participation;
 
 public interface Service {
 
     CourseResponseDto addCourse(CourseDtoRequest course);
 
-    CpLinkResponseDto findCpLink(String courseId, int type, String professor);
+    CpLink findCpLink(String courseId, int type, String professor);
 
     CoursesDto findAllCoursesByProfessorUsername(String professorUsername);
 
@@ -26,7 +26,7 @@ public interface Service {
 
     PostsResponseDto findPostsByCourseId(String courseId);
 
-    Participation addOrDeleteParticipation(Participation participation, String auth);
+    Participation addOrDeleteParticipation(Participation participation);
 
     ParticipationsResponseDto findParticipationsByUserId(String userId);
 

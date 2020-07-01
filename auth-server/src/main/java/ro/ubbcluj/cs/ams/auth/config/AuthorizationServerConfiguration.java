@@ -33,20 +33,14 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
     @Autowired
     private UserDetailsService userDetailsService;
 
-//    @Autowired
-//    private ClientDetailsService clientDetailsService;
-
-    //defines the security constraints on the token endpoint
     @Override
-    public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
+    public void configure(AuthorizationServerSecurityConfigurer security) {
 
         security.checkTokenAccess("isAuthenticated()")
                 .tokenKeyAccess("permitAll()")
                 .passwordEncoder(passwordEncoder);
     }
 
-    // a configurer that defines the client details service. Client details can be initializaed
-    //or you can just refer to an existing store
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
 
@@ -54,9 +48,8 @@ public class AuthorizationServerConfiguration extends AuthorizationServerConfigu
                 .passwordEncoder(passwordEncoder);
     }
 
-    //defines the authorization and token endpoints and the token services
     @Override
-    public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+    public void configure(AuthorizationServerEndpointsConfigurer endpoints) {
 
         endpoints.authenticationManager(authenticationManager)
                 .tokenStore(tokenStore)

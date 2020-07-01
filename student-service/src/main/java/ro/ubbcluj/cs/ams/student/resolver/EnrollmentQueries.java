@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import ro.ubbcluj.cs.ams.student.dto.CoursesIdsDto;
+import ro.ubbcluj.cs.ams.student.dto.student.CoursesIdsDto;
 import ro.ubbcluj.cs.ams.student.model.tables.records.EnrollmentRecord;
 import ro.ubbcluj.cs.ams.student.repository.enrollmentRepo.EnrollmentRepo;
 

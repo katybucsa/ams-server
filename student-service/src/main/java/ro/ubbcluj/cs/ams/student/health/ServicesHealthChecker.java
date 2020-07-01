@@ -49,9 +49,6 @@ public class ServicesHealthChecker {
     private String thisAppName;
 
     @Autowired
-    private Queue adminQueue;
-
-    @Autowired
     private JmsTemplate jmsTemplate;
 
     @Autowired
@@ -71,7 +68,7 @@ public class ServicesHealthChecker {
         while (true) {
             if (props.getNumber() == eurekaClient.getApplications().size() && !allStarted) {
 
-                jmsTemplate.convertAndSend(adminQueue, objectMapper.writeValueAsString(ServiceState.builder()
+                jmsTemplate.convertAndSend("admin-queue", objectMapper.writeValueAsString(ServiceState.builder()
                         .service(thisAppName.split("[-]")[0])
                         .state("running")
                         .build()));
@@ -127,7 +124,7 @@ public class ServicesHealthChecker {
                     detectedServices.add(service);
                     if (iAmTheLeader()) {
                         LOGGER.info("========== I am the leader - {}", thisAppName);
-                        jmsTemplate.convertAndSend(adminQueue, objectMapper.writeValueAsString(ServiceState.builder()
+                        jmsTemplate.convertAndSend("admin-queue", objectMapper.writeValueAsString(ServiceState.builder()
                                 .service(service.getName().split("[-]")[0])
                                 .state("error")
                                 .build()));

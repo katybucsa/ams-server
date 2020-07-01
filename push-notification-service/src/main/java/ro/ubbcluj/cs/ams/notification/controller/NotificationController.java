@@ -4,18 +4,21 @@ import org.jooq.tools.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.bind.annotation.*;
-import ro.ubbcluj.cs.ams.notification.dto.NotifNr;
-import ro.ubbcluj.cs.ams.notification.dto.SubscriptionDto;
-import ro.ubbcluj.cs.ams.notification.dto.SubscriptionEndpoint;
-import ro.ubbcluj.cs.ams.notification.dto.UserNotifs;
+import ro.ubbcluj.cs.ams.notification.dto.notification.NotifNr;
+import ro.ubbcluj.cs.ams.notification.dto.subscription.SubscriptionDto;
+import ro.ubbcluj.cs.ams.notification.dto.subscription.SubscriptionEndpoint;
+import ro.ubbcluj.cs.ams.notification.dto.notification.UserNotifs;
 import ro.ubbcluj.cs.ams.notification.health.HandleServicesHealthRequests;
 import ro.ubbcluj.cs.ams.notification.health.ServicesHealthChecker;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.UserNotif;
-import ro.ubbcluj.cs.ams.notification.service.ServerKeys;
+import ro.ubbcluj.cs.ams.notification.service.exception.NotificationExceptionType;
+import ro.ubbcluj.cs.ams.notification.service.exception.NotificationServiceException;
+import ro.ubbcluj.cs.ams.notification.service.impl.ServerKeys;
 import ro.ubbcluj.cs.ams.notification.service.Service;
 
 import java.security.Principal;
@@ -147,5 +150,12 @@ public class NotificationController {
 
         LOGGER.info("========== SUCCESSFULLY LOGGING updateUserNotification {} ==========", principal.getName());
         return new ResponseEntity<>(updatedUserNotif, HttpStatus.OK);
+    }
+
+    @ExceptionHandler({NotificationServiceException.class})
+//    @ResponseBody
+    public ResponseEntity<NotificationExceptionType> handleException(NotificationServiceException exception) {
+
+        return new ResponseEntity<>(exception.getType(), new HttpHeaders(), exception.getHttpStatus());
     }
 }

@@ -7,9 +7,6 @@ hystrix:
             timeoutInMilliseconds: 91000
 
 ribbon:
-#  eureka:
-#    enabled:
-#      true
   restclient:
     enabled: true
   ReadTimeout: 30000
@@ -56,8 +53,8 @@ zuul:
   retryable: true
   sensitiveHeaders: Cookie,Set-Cookie
   host:
-    connect-timeout-millis: 40000
-    socket-timeout-millis: 40000
+    connect-timeout-millis: 60000
+    socket-timeout-millis: 60000
   routes:
     auth-service:
       path: /auth/**
@@ -89,7 +86,6 @@ zuul:
       serviceId: gateway-service
       stripPrefix: false
       retryable: true
+
 server:
-#  servlet:
-#    context-path: /gateway
   port: 8080

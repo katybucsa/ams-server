@@ -6,20 +6,26 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import ro.ubbcluj.cs.ams.course.controller.CourseController;
-import ro.ubbcluj.cs.ams.course.dto.ActivityTypes;
+import ro.ubbcluj.cs.ams.course.dto.activityType.ActivityTypes;
+import ro.ubbcluj.cs.ams.course.service.Mappers;
 import ro.ubbcluj.cs.ams.course.dto.StudentDetailsDto;
+import ro.ubbcluj.cs.ams.course.dto.course.CourseDtoRequest;
 import ro.ubbcluj.cs.ams.course.dto.course.CourseNameResponse;
-import ro.ubbcluj.cs.ams.course.dto.Mappers;
 import ro.ubbcluj.cs.ams.course.dto.course.CourseResponseDto;
+import ro.ubbcluj.cs.ams.course.dto.course.CoursesDto;
 import ro.ubbcluj.cs.ams.course.dto.participation.ParticipantsResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.participation.ParticipationDetalis;
-import ro.ubbcluj.cs.ams.course.dto.course.CourseDtoRequest;
-import ro.ubbcluj.cs.ams.course.dto.course.CoursesDto;
-import ro.ubbcluj.cs.ams.course.dto.cplink.CpLinkResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.participation.ParticipationsResponseDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostRequestDto;
 import ro.ubbcluj.cs.ams.course.dto.post.PostResponseDto;
@@ -38,8 +44,10 @@ import ro.ubbcluj.cs.ams.course.service.Service;
 import ro.ubbcluj.cs.ams.course.service.exception.CourseExceptionType;
 import ro.ubbcluj.cs.ams.course.service.exception.CourseServiceException;
 
+import javax.annotation.Resource;
 import javax.inject.Provider;
 import javax.jms.Queue;
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.text.DecimalFormat;
 import java.time.Instant;
@@ -82,12 +90,6 @@ public class CourseServiceImpl implements Service {
     private Mappers mappers;
 
     @Autowired
-    private Queue notificationQueue;
-
-    @Autowired
-    private Queue participQueue;
-
-    @Autowired
     private JmsTemplate jmsTemplate;
 
     @Autowired
@@ -100,10 +102,12 @@ public class CourseServiceImpl implements Service {
     @Qualifier("WebClientBuilderBean")
     private WebClient.Builder webClientBuilder;
 
+    @Resource
+    private HttpServletRequest httpServletRequest;
+
     private String prefixCode = "ML";
 
     private DecimalFormat myFormat = new DecimalFormat("0000");
-
 
     @Transactional
     @Override
@@ -131,14 +135,14 @@ public class CourseServiceImpl implements Service {
     }
 
     @Override
-    public CpLinkResponseDto findCpLink(String courseId, int type, String professor) {
+    public CpLink findCpLink(String courseId, int type, String professor) {
 
         LOGGER.info("========== LOGGING findCpLink ==========");
 
         CpLinkRecord cpLinkRecord = cpLinkRepo.findCpLink(courseId, type, professor);
 
-        LOGGER.info("========== SUCCESSFUL LOGGING findSpLink ==========");
-        return mappers.cpLinkRecordToCpLinkResponseDto(cpLinkRecord);
+        LOGGER.info("========== SUCCESSFULLY LOGGING findSpLink ==========");
+        return mappers.cpLinkRecordToCpLink(cpLinkRecord);
     }
 
     @Override
@@ -179,7 +183,7 @@ public class CourseServiceImpl implements Service {
             postResponseDto.setEvent(event);
             postResponseDto.setCourseName(courseRecord.getName());
         }
-        jmsTemplate.convertAndSend(notificationQueue, objectMapper.writeValueAsString(postResponseDto));
+        jmsTemplate.convertAndSend("notification-queue", objectMapper.writeValueAsString(postResponseDto));
 
         LOGGER.info("========== SUCCESSFUL LOGGING addPost ==========");
         return postResponseDto;
@@ -211,7 +215,7 @@ public class CourseServiceImpl implements Service {
 
     @SneakyThrows
     @Override
-    public Participation addOrDeleteParticipation(Participation participation, String auth) {
+    public Participation addOrDeleteParticipation(Participation participation) {
 
         LOGGER.info("========== LOGGING addParticipation ==========");
 
@@ -227,7 +231,7 @@ public class CourseServiceImpl implements Service {
             Map<String, String> names = new HashMap<>();
             participants.forEach(p -> {
                 if (!names.containsKey(p)) {
-                    String n = findUserNameByUserId(p, auth);
+                    String n = findUserNameByUserId(p);
                     names.put(p, n);
                 }
             });
@@ -241,7 +245,7 @@ public class CourseServiceImpl implements Service {
                     .participants(new ArrayList<>(names.values()))
                     .build();
 
-            jmsTemplate.convertAndSend(participQueue, objectMapper.writeValueAsString(pDetails));
+            jmsTemplate.convertAndSend("particip-queue", objectMapper.writeValueAsString(pDetails));
         }
 
         LOGGER.info("========== SUCCESSFUL LOGGING addParticipation ==========");
@@ -283,6 +287,11 @@ public class CourseServiceImpl implements Service {
         LOGGER.info("========== LOGGING findCourseById ==========");
 
         CourseRecord courseRecord = courseRepo.findById(courseId);
+        if (Objects.isNull(courseRecord)) {
+
+            LOGGER.warn("========== course with id {} was not found ==========", courseId);
+            throw new CourseServiceException("Course not found", CourseExceptionType.COURSE_NOT_FOUND, HttpStatus.NOT_FOUND);
+        }
 
         LOGGER.info("========== SUCCESSFULLY LOGGING findCourseById ==========");
         return mappers.courseRecordToCourseNameResponse(courseRecord);
@@ -293,7 +302,13 @@ public class CourseServiceImpl implements Service {
 
         LOGGER.info("========== LOGGING findActivityTypeById ==========");
 
-        ActivityType activityType = mappers.activityTypeRecordToActivityType(activityTypeRepo.findActivityTypeById(typeId));
+        ActivityTypeRecord activityTypeRecord = activityTypeRepo.findActivityTypeById(typeId);
+        if (Objects.isNull(activityTypeRecord)) {
+
+            LOGGER.warn("========== activity with id {} was not found ==========", typeId);
+            throw new CourseServiceException("Activity type not found", CourseExceptionType.ACTIVITY_TYPE_NOT_FOUND, HttpStatus.NOT_FOUND);
+        }
+        ActivityType activityType = mappers.activityTypeRecordToActivityType(activityTypeRecord);
 
         LOGGER.info("========== SUCCESSFULLY LOGGING findActivityTypeById ==========");
         return activityType;
@@ -305,9 +320,14 @@ public class CourseServiceImpl implements Service {
         LOGGER.info("========== LOGGING findEventParticipants ==========");
 
         List<ParticipationRecord> participationRecords = participRepo.findAllByEventId(postId);
+        if (Objects.isNull(participationRecords)) {
+
+            LOGGER.warn("========== Post with id {} was not found ==========", postId);
+            throw new CourseServiceException("Post was not found", CourseExceptionType.POST_NOT_FOUND, HttpStatus.NOT_FOUND);
+        }
         List<String> list = new ArrayList<>();
         participationRecords.forEach(p -> {
-            list.add(findUserNameByUserId(p.getUserId(), auth));
+            list.add(findUserNameByUserId(p.getUserId()));
         });
 
         LOGGER.info("========== SUCCESSFULLY LOGGING findEventParticipants ==========");
@@ -338,18 +358,25 @@ public class CourseServiceImpl implements Service {
         return code;
     }
 
-    private String findUserNameByUserId(String userId, String authorization) {
-
+    @Retryable(value = {WebClientResponseException.class}, maxAttempts = 3, backoff = @Backoff(delay = 6000))
+    @Cacheable(value = "userNameById", key = "#userId")
+    public String findUserNameByUserId(String userId) {
 
         StudentDetailsDto studentDetailsDto = webClientBuilder
                 .build()
                 .get()
                 .uri("http://auth-service/auth/users?username=" + userId)
-                .header("Authorization", authorization)
+                .header("Authorization", httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION))
                 .retrieve()
                 .bodyToMono(StudentDetailsDto.class)
                 .block();
         return Objects.requireNonNull(studentDetailsDto).getFirstName() + " " + studentDetailsDto.getLastName();
     }
 
+    @Recover
+    public String recover(WebClientResponseException t) {
+
+        LOGGER.info("Recover");
+        throw new CourseServiceException("Could not get users!", CourseExceptionType.ERROR, HttpStatus.SERVICE_UNAVAILABLE);
+    }
 }

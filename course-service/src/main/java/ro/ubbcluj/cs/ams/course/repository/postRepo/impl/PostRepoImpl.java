@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import ro.ubbcluj.cs.ams.course.model.Tables;
 import ro.ubbcluj.cs.ams.course.model.tables.pojos.Post;
 import ro.ubbcluj.cs.ams.course.model.tables.records.PostRecord;
 import ro.ubbcluj.cs.ams.course.repository.postRepo.PostRepo;
@@ -20,7 +19,7 @@ public class PostRepoImpl implements PostRepo {
     @Autowired
     private DSLContext dsl;
 
-    private final Logger LOGGER = LogManager.getLogger(PostRepoImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(PostRepoImpl.class);
 
     @Override
     public PostRecord addPost(Post post) {
@@ -32,7 +31,7 @@ public class PostRepoImpl implements PostRepo {
                 .returning()
                 .fetchOne();
 
-        LOGGER.info("========== SUCCESSFUL LOGGING addPost ==========");
+        LOGGER.info("========== SUCCESSFULLY LOGGING addPost ==========");
         return postRecord;
     }
 
@@ -46,7 +45,7 @@ public class PostRepoImpl implements PostRepo {
                 .orderBy(POST.DATE.desc())
                 .fetch();
 
-        LOGGER.info("========== SUCCESSFUL LOGGING findPostsByCourseId ==========");
+        LOGGER.info("========== SUCCESSFULLY LOGGING findPostsByCourseId ==========");
         return postRecords;
     }
 
@@ -59,7 +58,7 @@ public class PostRepoImpl implements PostRepo {
                 .where(POST.ID.eq(id))
                 .fetchAny();
 
-        LOGGER.info("========== SUCCESSFUL LOGGING findById ==========");
+        LOGGER.info("========== SUCCESSFULLY LOGGING findById ==========");
         return postRecord;
     }
 }

@@ -9,11 +9,3 @@ server:
   servlet:
     context-path: /assignment
   port: 8084
-
-#server:
-#  servlet:
-#    context-path: /assignment
-#  port: ${PORT:0}
-#eureka:
-#  instance:
-#    instanceId: ${spring.cloud.client.hostname}:${spring.application.name}:${random.int[1,999999]}

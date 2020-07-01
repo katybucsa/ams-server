@@ -4,7 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
-import ro.ubbcluj.cs.ams.notification.dto.*;
+import ro.ubbcluj.cs.ams.notification.dto.notification.UserNotifComplete;
+import ro.ubbcluj.cs.ams.notification.dto.notification.UserNotifs;
+import ro.ubbcluj.cs.ams.notification.dto.subscription.SubscriptionDto;
+import ro.ubbcluj.cs.ams.notification.dto.subscription.SubscriptionEndpoint;
+import ro.ubbcluj.cs.ams.notification.dto.subscription.SubscriptionResponseDto;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Notification;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Subscription;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.SubscriptionKeys;
@@ -14,9 +18,10 @@ import ro.ubbcluj.cs.ams.notification.model.tables.records.SubscriptionKeysRecor
 import ro.ubbcluj.cs.ams.notification.model.tables.records.SubscriptionRecord;
 import ro.ubbcluj.cs.ams.notification.model.tables.records.UserNotifRecord;
 import ro.ubbcluj.cs.ams.notification.repository.notification.NotificationRepo;
-import ro.ubbcluj.cs.ams.notification.repository.notification.userNotif.UserNotifRepo;
+import ro.ubbcluj.cs.ams.notification.repository.userNotif.UserNotifRepo;
 import ro.ubbcluj.cs.ams.notification.repository.subsKeys.SubscriptionKeysRepo;
 import ro.ubbcluj.cs.ams.notification.repository.subscription.SubscriptionRepo;
+import ro.ubbcluj.cs.ams.notification.service.Mappers;
 import ro.ubbcluj.cs.ams.notification.service.Service;
 
 import javax.inject.Provider;

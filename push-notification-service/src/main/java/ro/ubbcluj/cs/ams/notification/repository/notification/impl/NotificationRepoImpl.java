@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import ro.ubbcluj.cs.ams.notification.model.Tables;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Notification;
 import ro.ubbcluj.cs.ams.notification.model.tables.records.NotificationRecord;
 import ro.ubbcluj.cs.ams.notification.repository.notification.NotificationRepo;

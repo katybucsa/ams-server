@@ -5,11 +5,11 @@ import org.apache.logging.log4j.Logger;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import ro.ubbcluj.cs.ams.course.model.Tables;
 import ro.ubbcluj.cs.ams.course.model.tables.pojos.Event;
 import ro.ubbcluj.cs.ams.course.model.tables.records.EventRecord;
-import ro.ubbcluj.cs.ams.course.repository.cpLinkRepo.impl.CpLinkRepoImpl;
 import ro.ubbcluj.cs.ams.course.repository.event.EventRepo;
+
+import static ro.ubbcluj.cs.ams.course.model.tables.Event.EVENT;
 
 @Repository
 public class EventRepoImpl implements EventRepo {
@@ -24,7 +24,7 @@ public class EventRepoImpl implements EventRepo {
 
         LOGGER.info("========== LOGGING addEvent ==========");
 
-        EventRecord eventRecord = dsl.insertInto(Tables.EVENT, Tables.EVENT.ID, Tables.EVENT.DATE, Tables.EVENT.HOUR, Tables.EVENT.PLACE)
+        EventRecord eventRecord = dsl.insertInto(EVENT, EVENT.ID, EVENT.DATE, EVENT.HOUR, EVENT.PLACE)
                 .values(event.getId(), event.getDate(), event.getHour(), event.getPlace())
                 .returning()
                 .fetchOne();
@@ -39,8 +39,8 @@ public class EventRepoImpl implements EventRepo {
 
         LOGGER.info("========== LOGGING findById ==========");
 
-        EventRecord eventRecord = dsl.selectFrom(Tables.EVENT)
-                .where(Tables.EVENT.ID.eq(id))
+        EventRecord eventRecord = dsl.selectFrom(EVENT)
+                .where(EVENT.ID.eq(id))
                 .fetchAny();
 
         LOGGER.info("========== SUCCESSFULLY LOGGING findById ==========");

@@ -11,15 +11,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.reactive.function.client.WebClient;
 import ro.ubbcluj.cs.ams.utils.common.ServiceState;
 import ro.ubbcluj.cs.ams.utils.config.EurekaServicesProperties;
 import ro.ubbcluj.cs.ams.utils.config.TargetJarsProperties;
 import ro.ubbcluj.cs.ams.utils.health.MicroserviceDetails;
 
-import javax.jms.Queue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,9 +45,6 @@ public class ServicesHealthChecker {
     private String thisAppName;
 
     @Autowired
-    private Queue adminQueue;
-
-    @Autowired
     private JmsTemplate jmsTemplate;
 
     @Autowired
@@ -70,7 +64,7 @@ public class ServicesHealthChecker {
         while (true) {
             if (props.getNumber() == eurekaClient.getApplications().size() && !allStarted) {
 
-                jmsTemplate.convertAndSend(adminQueue, objectMapper.writeValueAsString(ServiceState.builder()
+                jmsTemplate.convertAndSend("admin-queue", objectMapper.writeValueAsString(ServiceState.builder()
                         .service(thisAppName.split("[-]")[0])
                         .state("running")
                         .build()));
@@ -126,7 +120,7 @@ public class ServicesHealthChecker {
                     detectedServices.add(service);
                     if (iAmTheLeader()) {
                         LOGGER.info("========== I am the leader - {}", thisAppName);
-                        jmsTemplate.convertAndSend(adminQueue, objectMapper.writeValueAsString(ServiceState.builder()
+                        jmsTemplate.convertAndSend("admin-queue", objectMapper.writeValueAsString(ServiceState.builder()
                                 .service(service.getName().split("[-]")[0])
                                 .state("error")
                                 .build()));

@@ -14,5 +14,6 @@ public enum CourseExceptionType {
     SPECIALIZATION_NOT_FOUND,
     ACTIVITY_TYPE_NOT_FOUND,
     ENROLLMENT_NOT_FOUND,
-    BAD_DATA
+    BAD_DATA,
+    POST_NOT_FOUND
 }

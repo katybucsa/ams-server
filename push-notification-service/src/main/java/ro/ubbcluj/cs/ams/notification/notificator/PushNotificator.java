@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import ro.ubbcluj.cs.ams.notification.model.tables.pojos.Subscription;
-import ro.ubbcluj.cs.ams.notification.service.ServerKeys;
+import ro.ubbcluj.cs.ams.notification.service.impl.ServerKeys;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;

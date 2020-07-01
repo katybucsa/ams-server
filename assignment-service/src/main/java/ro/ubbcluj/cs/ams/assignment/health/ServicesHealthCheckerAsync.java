@@ -115,6 +115,8 @@ public class ServicesHealthCheckerAsync {
             System.out.println(sentServices.size());
             for (MicroserviceDetails service : sentServices) {
                 if (!aliveServices.contains(service.getName())) {
+
+                    LOGGER.info("========== Service {} is down from {}", service.getName(),thisAppName);
                     service.setTimesNoRun(3);
                     service.setCalledMe(false);
                     detectedServices.add(service);
@@ -125,7 +127,6 @@ public class ServicesHealthCheckerAsync {
                     }
                 }
             }
-//            Thread.sleep(4000);
             aliveServices.clear();
         }
     }

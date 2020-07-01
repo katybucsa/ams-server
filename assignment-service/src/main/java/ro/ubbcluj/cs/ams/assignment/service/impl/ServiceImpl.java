@@ -4,9 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
-import ro.ubbcluj.cs.ams.assignment.dto.GradeDto;
-import ro.ubbcluj.cs.ams.assignment.dto.Mappers;
-import ro.ubbcluj.cs.ams.assignment.dto.GradeResponseDto;
+import ro.ubbcluj.cs.ams.assignment.dto.grade.GradeDto;
+import ro.ubbcluj.cs.ams.assignment.service.Mappers;
 import ro.ubbcluj.cs.ams.assignment.model.tables.pojos.Grade;
 import ro.ubbcluj.cs.ams.assignment.model.tables.records.GradeRecord;
 import ro.ubbcluj.cs.ams.assignment.repository.AssignmentRepo;
@@ -30,31 +29,31 @@ public class ServiceImpl implements Service {
     @Autowired
     private AssignmentRepo assignmentRepo;
 
-    private final Logger logger = LogManager.getLogger(ServiceImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(ServiceImpl.class);
 
     @Override
-    public GradeResponseDto addGrade(GradeDto gradeDto, String teacher) {
+    public Grade addGrade(GradeDto gradeDto, String teacher) {
 
-        logger.info("========== LOGGING addGrade ==========");
+        LOGGER.info("========== LOGGING addGrade ==========");
 
         Grade grade = mappers.gradeDtoToGrade(gradeDto);
         grade.setTeacher(teacher);
         grade.setDate(LocalDateTime.ofInstant(provider.get(), ZoneId.systemDefault()));
         GradeRecord gradeRecord = assignmentRepo.addGrade(grade);
 
-        logger.info("========== SUCCESSFUL LOGGING addGrade ==========");
-        return mappers.gradeRecordToGradeResponseDto(gradeRecord);
+        LOGGER.info("========== SUCCESSFULLY LOGGING addGrade ==========");
+        return mappers.gradeRecordToGrade(gradeRecord);
     }
 
     @Override
     @Cacheable(value = "studentGrades", key = "{#student, #courseId}")
     public List<Grade> findAllGradesByStudentAndCourseId(String student, String courseId) {
 
-        logger.info("========== LOGGING findAllGradesByStudentAndCourseId ==========");
+        LOGGER.info("========== LOGGING findAllGradesByStudentAndCourseId ==========");
 
-        List<Grade> gradeRecordList = mappers.gradeRecordToGrade(assignmentRepo.getAllGradesByStudentAndCourseId(student, courseId));
+        List<Grade> gradeRecordList = mappers.gradeRecordsToGrades(assignmentRepo.getAllGradesByStudentAndCourseId(student, courseId));
 
-        logger.info("========== SUCCESSFULLY LOGGING findAllGradesByStudentAndCourseId ==========");
+        LOGGER.info("========== SUCCESSFULLY LOGGING findAllGradesByStudentAndCourseId ==========");
         return gradeRecordList;
     }
 }

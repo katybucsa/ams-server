@@ -7,13 +7,26 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
-import ro.ubbcluj.cs.ams.assignment.dto.*;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import ro.ubbcluj.cs.ams.assignment.dto.grade.GradeDto;
+import ro.ubbcluj.cs.ams.assignment.dto.grade.GradesResponseDto;
+import ro.ubbcluj.cs.ams.assignment.dto.responses.ActivityType;
+import ro.ubbcluj.cs.ams.assignment.dto.responses.CourseNameResponse;
+import ro.ubbcluj.cs.ams.assignment.dto.responses.CpLinkBean;
+import ro.ubbcluj.cs.ams.assignment.dto.responses.StudentGrade;
 import ro.ubbcluj.cs.ams.assignment.health.HandleServicesHealthRequests;
 import ro.ubbcluj.cs.ams.assignment.health.ServicesHealthChecker;
 import ro.ubbcluj.cs.ams.assignment.model.tables.pojos.Grade;
@@ -21,14 +34,14 @@ import ro.ubbcluj.cs.ams.assignment.service.Service;
 import ro.ubbcluj.cs.ams.assignment.service.exception.AssignmentServiceException;
 import ro.ubbcluj.cs.ams.assignment.service.exception.AssignmentServiceExceptionType;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
+@EnableWebMvc
 public class AssignmentController {
 
     @Autowired
@@ -46,6 +59,9 @@ public class AssignmentController {
     @Autowired
     @Qualifier("WebClientBuilderBean")
     private WebClient.Builder webClientBuilder;
+
+    @Resource
+    private HttpServletRequest httpServletRequest;
 
     private static final Logger LOGGER = LogManager.getLogger(AssignmentController.class);
 
@@ -74,72 +90,91 @@ public class AssignmentController {
 
     @ApiOperation(value = "Assign given grade to the specified student")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "SUCCESS", response = GradeResponseDto.class),
+            @ApiResponse(code = 200, message = "SUCCESS", response = Grade.class),
             @ApiResponse(code = 400, message = "INVALID_GRADE", response = AssignmentServiceExceptionType.class),
+            @ApiResponse(code = 404, message = "TEACHER_NOT_FOUND", response = AssignmentServiceExceptionType.class),
     })
     @RequestMapping(value = "/grades", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> assignGrade(@RequestBody @Valid GradeDto gradeDto, BindingResult result, Principal principal) {
+    public ResponseEntity<Grade> assignGrade(@RequestBody @Valid GradeDto gradeDto, BindingResult result, Principal principal) {
 
         LOGGER.info("========== LOGGING assignGrade ==========");
         LOGGER.info("GradeDto {}", gradeDto);
         if (result.hasErrors()) {
             LOGGER.error("Invalid json object!");
-            throw new AssignmentServiceException("Invalid grade" + gradeDto, AssignmentServiceExceptionType.INVALID_GRADE, HttpStatus.BAD_REQUEST);
+            throw new AssignmentServiceException("Invalid grade", AssignmentServiceExceptionType.INVALID_GRADE, HttpStatus.BAD_REQUEST);
         }
 
         String teacherUsername = principal.getName();
-        if (null == microserviceCall.checkIfProfessorTeachesSpecificActivityTypeForASubject(gradeDto.getCourseId(), gradeDto.getTypeId(), teacherUsername)) {
+        CpLinkBean cpLinkBean = microserviceCall.checkIfProfessorTeachesSpecificActivityTypeForASubject(gradeDto.getCourseId(), gradeDto.getTypeId(), teacherUsername);
+        if (null == cpLinkBean) {
             LOGGER.error("========== subject microservice not responding ==========");
-            return new ResponseEntity<>("This service is not currently available", HttpStatus.SERVICE_UNAVAILABLE);
+            throw new AssignmentServiceException("There is no link for professor and course", AssignmentServiceExceptionType.ERROR, HttpStatus.NOT_FOUND);
         }
-//        microserviceCall.checkIfStudentExistsAndIsEnrolledIntoSubject(gradeDto.getStudent(), gradeDto.getSubjectId(), "assignGrade");
-        GradeResponseDto gradeResponseDto = service.addGrade(gradeDto, teacherUsername);
+        Grade grade = service.addGrade(gradeDto, teacherUsername);
 
         LOGGER.info("========== SUCCESSFUL LOGGING assignGrade ==========");
-        return new ResponseEntity<>(gradeResponseDto, HttpStatus.OK);
+        return new ResponseEntity<>(grade, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Find all grades for a student to a specified subject")
     @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "SUCCESS", response = Grade.class),
+
     })
     @RequestMapping(value = "/grades", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, params = {"courseId"})
-    public ResponseEntity<?> findAllGradesByStudentAndCourseId(@RequestHeader(name = "Authorization") String authorization, @RequestParam(name = "courseId") String courseId, Principal principal) {
+    public ResponseEntity<GradesResponseDto> findAllGradesByStudentAndCourseId(@RequestHeader(name = "Authorization") String authorization, @RequestParam(name = "courseId") String courseId, Principal principal) {
 
         LOGGER.info("========== LOGGING findAllGradesByStudentAndCourseId ==========");
 
         String studentUsername = principal.getName();
         List<Grade> grades = service.findAllGradesByStudentAndCourseId(studentUsername, courseId);
-        CourseNameResponse courseNameResponse = findCourseById(courseId, authorization);
-        GradesResponseDto gradesResponseDto = buildGradesResponse(grades, courseNameResponse, authorization);
+        CourseNameResponse courseNameResponse = findCourseById(courseId);
+        if (Objects.isNull(courseNameResponse))
+            throw new AssignmentServiceException("Course not found", AssignmentServiceExceptionType.ERROR, HttpStatus.NOT_FOUND);
+        if (Objects.isNull(courseNameResponse.getName())) {
+            courseNameResponse = getFromCacheCourseNameResponse(courseId, courseNameResponse);
+            if (Objects.isNull(courseNameResponse))
+                throw new AssignmentServiceException("Could not retrieve course", AssignmentServiceExceptionType.ERROR, HttpStatus.SERVICE_UNAVAILABLE);
+        }
+        GradesResponseDto gradesResponseDto = buildGradesResponse(grades, courseNameResponse);
 
         LOGGER.info("========== SUCCESSFULLY LOGGING findAllGradesByStudentAndCourseId ==========");
         return new ResponseEntity<>(gradesResponseDto, HttpStatus.OK);
     }
 
-    private CourseNameResponse findCourseById(String courseId, String authorization) {
+    @Retryable(value = {WebClientResponseException.class}, maxAttempts = 3, backoff = @Backoff(delay = 6000))
+    @CachePut(value = "courseNameResponse", key = "#courseId")
+    public CourseNameResponse findCourseById(String courseId) {
 
         return webClientBuilder
                 .build()
                 .get()
                 .uri("http://course-service/course/courses?courseId=" + courseId)
-                .header("Authorization", authorization)
+                .header("Authorization", httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION))
                 .retrieve()
                 .bodyToMono(CourseNameResponse.class)
                 .block();
     }
 
-    private GradesResponseDto buildGradesResponse(List<Grade> grades, CourseNameResponse courseNameResponse, String authorization) {
+    @Cacheable(value = "courseNameResponse", key = "#courseId", sync = true)
+    public CourseNameResponse getFromCacheCourseNameResponse(String courseId, CourseNameResponse courseNameResponse) {
+
+        return courseNameResponse;
+    }
+
+    @Retryable(value = {WebClientResponseException.class}, maxAttempts = 3, backoff = @Backoff(delay = 6000))
+    @CachePut(value = "gradesResponseDto", key = "#grades")
+    public GradesResponseDto buildGradesResponse(List<Grade> grades, CourseNameResponse courseNameResponse) {
 
         List<StudentGrade> studentGrades = new ArrayList<>();
         Map<Integer, ActivityType> map = new HashMap<>();
-
         grades.forEach(grade -> {
             if (!map.containsKey(grade.getTypeId())) {
                 ActivityType activityType = webClientBuilder
                         .build()
                         .get()
                         .uri("http://course-service/course/activity-type?typeId=" + grade.getTypeId())
-                        .header("Authorization", authorization)
+                        .header("Authorization", httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION))
                         .retrieve()
                         .bodyToMono(ActivityType.class)
                         .block();
@@ -156,5 +191,20 @@ public class AssignmentController {
         return GradesResponseDto.builder()
                 .data(studentGrades)
                 .build();
+    }
+
+    @Recover
+    public CpLinkBean recover(WebClientResponseException t) {
+
+        LOGGER.info("Recover");
+        throw new AssignmentServiceException("Could not assign grade!", AssignmentServiceExceptionType.ERROR, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+
+    @ExceptionHandler({AssignmentServiceException.class})
+//    @ResponseBody
+    public ResponseEntity<AssignmentServiceExceptionType> handleException(AssignmentServiceException exception) {
+
+        return new ResponseEntity<>(exception.getType(), new HttpHeaders(), exception.getStatus());
     }
 }

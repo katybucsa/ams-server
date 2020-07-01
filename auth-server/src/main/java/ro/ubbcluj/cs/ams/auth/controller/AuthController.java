@@ -101,7 +101,6 @@ public class AuthController {
             produces = MediaType.APPLICATION_JSON_VALUE,
             params = {"username", "password"}
     )
-    @Retryable(backoff = @Backoff(value = 5000))
     public ResponseEntity<AuthResponse> login(@Valid UserDto userDto, BindingResult result) {
 
         LOGGER.info("==========login==========");
@@ -205,26 +204,6 @@ public class AuthController {
         return new ResponseEntity<>(userDetailsDto, HttpStatus.OK);
     }
 
-//    @RequestMapping(value = "/users",
-//            method = RequestMethod.GET,
-//            produces = MediaType.APPLICATION_JSON_VALUE
-//    )
-//    public ResponseEntity<UserDetailsDto> findUserDetails(Principal principal) {
-//
-//        LOGGER.info("========== LOGGING findUserDetails ==========");
-//        LOGGER.info("Username {}", principal.getName());
-//
-//        User user = userDetailsService.findUserByUsername(principal.getName());
-//        UserDetailsDto userDetailsDto = UserDetailsDto.builder()
-//                .firstName(user.getFirstName())
-//                .lastName(user.getLastName())
-//                .email(user.getUsername())
-//                .build();
-//
-//        LOGGER.info("========== SUCCESSFULLY LOGGING findUserDetails ==========");
-//        return new ResponseEntity<>(userDetailsDto, HttpStatus.OK);
-//    }
-
     private AuthResponse buildAuthResponse(UserDetails userDetails, OAuth2AccessToken accessToken) {
 
         return AuthResponse.builder()
@@ -236,7 +215,7 @@ public class AuthController {
     }
 
     @ExceptionHandler({AuthServiceException.class})
-    @ResponseBody
+//    @ResponseBody
     public ResponseEntity<AuthExceptionType> handleException(AuthServiceException exception) {
 
         return new ResponseEntity<>(exception.getType(), new HttpHeaders(), exception.getHttpStatus());
