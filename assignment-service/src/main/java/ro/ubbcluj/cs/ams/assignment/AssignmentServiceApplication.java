@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableEurekaClient
 @EnableTransactionManagement
 @SpringBootApplication
-//@EnableCircuitBreaker
 @EnableCaching
 @EnableRetry(proxyTargetClass = true)
 public class AssignmentServiceApplication {

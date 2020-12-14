@@ -215,7 +215,6 @@ public class AuthController {
     }
 
     @ExceptionHandler({AuthServiceException.class})
-//    @ResponseBody
     public ResponseEntity<AuthExceptionType> handleException(AuthServiceException exception) {
 
         return new ResponseEntity<>(exception.getType(), new HttpHeaders(), exception.getHttpStatus());

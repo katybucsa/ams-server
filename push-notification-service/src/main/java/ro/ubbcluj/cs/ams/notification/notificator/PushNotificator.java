@@ -89,7 +89,6 @@ public class PushNotificator {
                 case 410:
                     LOGGER.warn("Subscription not found or gone: {}",
                             subscription.getEndpoint());
-                    // remove subscription from our collection of subscriptions
                     return CompletableFuture.completedFuture(true);
                 case 429:
                     LOGGER.error("Too many requests: {}", request);

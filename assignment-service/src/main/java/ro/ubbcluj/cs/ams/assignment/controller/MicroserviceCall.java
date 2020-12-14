@@ -3,10 +3,7 @@ package ro.ubbcluj.cs.ams.assignment.controller;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
-import org.springframework.cloud.netflix.ribbon.RibbonClient;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -16,20 +13,12 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.retry.Retry;
-import reactor.retry.RetryContext;
 import ro.ubbcluj.cs.ams.assignment.dto.responses.CpLinkBean;
 import ro.ubbcluj.cs.ams.assignment.service.exception.AssignmentServiceException;
 import ro.ubbcluj.cs.ams.assignment.service.exception.AssignmentServiceExceptionType;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.time.Duration;
-import java.util.Objects;
-
-//import org.springframework.retry.annotation.Backoff;
-//import org.springframework.retry.annotation.Recover;
-//import org.springframework.retry.annotation.Retryable;
 
 @Component
 public class MicroserviceCall {
@@ -79,20 +68,16 @@ public class MicroserviceCall {
 
         CpLinkBean response = null;
         String path = "http://course-service/course/assign?courseId=" + courseId + "&activityTypeId=" + activityTypeId + "&professorUsername=" + professorUsername;
-//        try {
-            response = webClientBuilder
-                    .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                    .build()
-                    .get()
-                    .uri(path)
-                    .header("Authorization", httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION))
-                    .accept(MediaType.APPLICATION_JSON)
-                    .retrieve()
-                    .bodyToMono(CpLinkBean.class)
-                    .block();
-//        } catch (WebClientResponseException e) {
-//
-//        }
+        response = webClientBuilder
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build()
+                .get()
+                .uri(path)
+                .header("Authorization", httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION))
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(CpLinkBean.class)
+                .block();
         return response;
     }
 
@@ -102,23 +87,4 @@ public class MicroserviceCall {
         LOGGER.info("Recover");
         throw new AssignmentServiceException("Could not assign grade!", AssignmentServiceExceptionType.ERROR, HttpStatus.SERVICE_UNAVAILABLE);
     }
-
-//    private boolean is5xxServerError(RetryContext<Object> retryContext) {
-//        return retryContext.exception() instanceof WebClientResponseException &&
-//                ((WebClientResponseException) retryContext.exception()).getStatusCode().is5xxServerError();
-//    }
-
-//    @Cacheable(cacheNames = "cplinkCache", key = "{#courseId,#activityTypeId,#professorUsername}")
-//    public CpLinkBean getCpLinkBeanFromCache(String courseId, int activityTypeId, String professorUsername, CpLinkBean cpLinkBean) {
-//
-//        LOGGER.info("========== LOGGING getCpLinkBeanFromCache ==========");
-//        return cpLinkBean;
-//    }
-//
-//    @CachePut(cacheNames = "cplinkCache", key = "{#courseId,#activityTypeId,#professorUsername}")
-//    public CpLinkBean saveCpLinkBeanToCache(String courseId, int activityTypeId, String professorUsername) {
-//
-//        LOGGER.info("========== LOGGING saveCpLinkBeanToCache ==========");
-//        return CpLinkBean.builder().build();
-//    }
 }

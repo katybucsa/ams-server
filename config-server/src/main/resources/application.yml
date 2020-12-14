@@ -4,10 +4,6 @@ spring:
       server:
         native:
           search-locations: classpath:/shared #tells spring where to locate the config files
-#        git:
-#          uri: https://github.com/katybucsa/config-server-files
-#          username: katybucsa
-#          password:
   profiles:
     active: native
   security:

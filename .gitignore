@@ -1,8 +1,7 @@
 HELP.md
 target/
 !.mvn/wrapper/maven-wrapper.jar
-key.private
-key.public
+
 
 ### STS ###
 .apt_generated
@@ -20,6 +19,7 @@ key.public
 *.iml
 *.ipr
 ./.idea
+/.run/
 
 ### NetBeans ###
 /nbproject/private/
@@ -31,3 +31,4 @@ key.public
 
 ### VS Code ###
 .vscode/
+

@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Configuration
-//@EnableScheduling
 public class ServicesHealthChecker {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServicesHealthChecker.class);
@@ -62,10 +61,8 @@ public class ServicesHealthChecker {
     private static boolean allStarted = false;
 
     @SneakyThrows
-//    @Scheduled(fixedDelay = SEND_INTERVAL)
     private void sendHeartBeatRequestToAllServices() {
 
-//        LOGGER.info("MOD: {}", restTemplate().postForObject(serverBaseUrl + "/health?service-name=assignment-service",null, Void.class));
         while (true) {
             if (props.getNumber() == eurekaClient.getApplications().size() && !allStarted) {
 
@@ -108,7 +105,6 @@ public class ServicesHealthChecker {
     }
 
 
-    //    @Scheduled(initialDelay = 8000, fixedDelay = 5000)
     @SneakyThrows
     public void verifyAliveServices() {
 

@@ -162,7 +162,6 @@ public class StudentController {
     }
 
     @ExceptionHandler({StudentServiceException.class})
-//    @ResponseBody
     public ResponseEntity<StudentExceptionType> handleException(StudentServiceException exception) {
 
         return new ResponseEntity<>(exception.getType(), new HttpHeaders(), exception.getHttpStatus());

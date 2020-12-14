@@ -26,11 +26,7 @@ public interface Mappers {
 
     Post postRequestDtoToPost(PostRequestDto post);
 
-//    List<PostResponseDto> postsRecordsToPostsResponseDto(List<PostRecord> postRecords);
-
     Event eventRecordToEvent(EventRecord eventRecord);
-
-//    List<Participation> participationRecordToParticipation(List<ParticipationRecord> participationRecords);
 
     List<ActivityType> activityTypesRecordToActivityTypes(List<ActivityTypeRecord> activityTypes);
 

@@ -109,10 +109,4 @@ public class MicroserviceResponseProvider {
         return httpServletRequest.getHeader(HttpHeaders.AUTHORIZATION);
     }
 
-//    @Bean
-//    @LoadBalanced
-//    public WebClient.Builder WebClientBuilderBean() {
-//
-//        return WebClient.builder();
-//    }
 }

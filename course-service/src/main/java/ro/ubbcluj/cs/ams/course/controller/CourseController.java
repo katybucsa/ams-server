@@ -73,31 +73,24 @@ public class CourseController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
-    /**
-     * URL : http://localhost:8080/subject/
-     *
-     * @param subject
-     * @param result
-     * @return
-     */
     @ApiOperation(value = "Add given course")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "SUCCESS", response = Course.class),
-            @ApiResponse(code = 400, message = "DUPLICATE_SUBJECT", response = CourseExceptionType.class),
+            @ApiResponse(code = 400, message = "DUPLICATE_COURSE", response = CourseExceptionType.class),
     })
     @RequestMapping(value = "/", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<CourseResponseDto> addSubject(@RequestBody @Valid CourseDtoRequest subject, BindingResult result) {
+    public ResponseEntity<CourseResponseDto> addCourse(@RequestBody @Valid CourseDtoRequest course, BindingResult result) {
 
-        LOGGER.info("+++++++++LOGGING addSubject+++++++++");
-        loggingCourse(subject);
+        LOGGER.info("========== LOGGING addCourse ==========");
+        loggingCourse(course);
 
         if (result.hasErrors())
-            throw new CourseServiceException("Invalid subject " + subject, CourseExceptionType.INVALID_COURSE, HttpStatus.BAD_REQUEST);
+            throw new CourseServiceException("Invalid course " + course, CourseExceptionType.INVALID_COURSE, HttpStatus.BAD_REQUEST);
 
-        CourseResponseDto subjectDtoResponse = service.addCourse(subject);
+        CourseResponseDto courseDtoResponse = service.addCourse(course);
 
-        LOGGER.info("+++++++++SUCCESSFUL LOGGING addSubject+++++++++");
-        return new ResponseEntity<>(subjectDtoResponse, HttpStatus.OK);
+        LOGGER.info("========== SUCCESSFUL LOGGING addCourse ==========");
+        return new ResponseEntity<>(courseDtoResponse, HttpStatus.OK);
     }
 
 
@@ -140,7 +133,6 @@ public class CourseController {
     @ApiOperation(value = "Find posts by course id")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "SUCCESS", response = PostsResponseDto.class),
-//            @ApiResponse(code = 404, message = "NOT FOUND", response = SubjectExceptionType.class)
     })
     @RequestMapping(value = "/{courseId}/posts", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PostsResponseDto> findPostsByCourseId(@PathVariable(name = "courseId") String courseId) {

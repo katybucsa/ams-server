@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Configuration
-//@EnableScheduling
 public class ServicesHealthChecker {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServicesHealthChecker.class);
@@ -64,7 +63,6 @@ public class ServicesHealthChecker {
     private static boolean allStarted = false;
 
     @SneakyThrows
-//    @Scheduled(fixedDelay = SEND_INTERVAL)
     private void sendHeartBeatRequestToAllServices() {
 
         while (true) {

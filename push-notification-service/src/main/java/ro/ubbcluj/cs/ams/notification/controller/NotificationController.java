@@ -153,7 +153,6 @@ public class NotificationController {
     }
 
     @ExceptionHandler({NotificationServiceException.class})
-//    @ResponseBody
     public ResponseEntity<NotificationExceptionType> handleException(NotificationServiceException exception) {
 
         return new ResponseEntity<>(exception.getType(), new HttpHeaders(), exception.getHttpStatus());

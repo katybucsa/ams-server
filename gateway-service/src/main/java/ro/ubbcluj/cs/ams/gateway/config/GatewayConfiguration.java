@@ -18,12 +18,6 @@ public class GatewayConfiguration extends ResourceServerConfigurerAdapter {
     @Autowired
     private GatewayProperties props;
 
-    @Bean
-    public GatewayErrorFilter buildGatewayFilter() {
-
-        return new GatewayErrorFilter();
-    }
-
     @Override
     public void configure(HttpSecurity http) throws Exception {
 

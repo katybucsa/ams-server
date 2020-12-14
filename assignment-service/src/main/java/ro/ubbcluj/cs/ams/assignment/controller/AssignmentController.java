@@ -202,7 +202,6 @@ public class AssignmentController {
 
 
     @ExceptionHandler({AssignmentServiceException.class})
-//    @ResponseBody
     public ResponseEntity<AssignmentServiceExceptionType> handleException(AssignmentServiceException exception) {
 
         return new ResponseEntity<>(exception.getType(), new HttpHeaders(), exception.getStatus());
